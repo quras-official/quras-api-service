@@ -166,7 +166,7 @@ function getMyAssets(address, res) {
         logger.info(err, code);
         var result = JSON.stringify(body);
         res.setHeader('content-type', 'text/plain');
-        res.status(400).send(result);
+        res.status(200).send(result);
 			}
 			else
 			{
