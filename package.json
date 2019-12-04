@@ -1,0 +1,35 @@
+{
+  "name": "quras-blockexplorer-service",
+  "version": "1.0.0",
+  "description": "Quras blockchain back-end service",
+  "main": "./bin/www",
+  "scripts": {
+    "start": "node ./bin/www"
+  },
+  "keywords": [
+    "Quras"
+  ],
+  "author": "dotFund",
+  "license": "MIT",
+  "dependencies": {
+    "async": "2.6.1",
+    "bignumber.js": "4.0.0",
+    "cookie-parser": "~1.4.3",
+    "debug": "~2.6.9",
+    "deferred": "^0.7.9",
+    "express": "~4.16.0",
+    "generate-password": "^1.4.2",
+    "http-errors": "~1.6.2",
+    "jade": "~1.11.0",
+    "log4js": "1.1.0",
+    "morgan": "~1.9.0",
+    "mysql": "2.16.0",
+    "node-constants": "0.0.2",
+    "quras-js": "1.2.9",
+    "sync-mysql": "^3.0.1"
+  },
+  "devDependencies": {
+    "gulp": "3.9.1",
+    "gulp-nodemon": "^2.4.2"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "development" : {
+    "database": {
+      "host": "localhost",
+      "user": "root",
+      "password": "",
+      "database": "quras_db"
+    },
+    "node_url": "http://localhost:8989",
+    "web_server_url": "ws://127.0.0.1:8000",
+    "log4js": [
+      {
+        "type": "dateFile",
+        "category": "api",
+        "filename": "logs/api.log",
+        "pattern": "-yyyy-MM-dd"
+      },
+      {
+        "type": "dateFile",
+        "category": "explorer",
+        "filename": "logs/explorer.log",
+        "pattern": "-yyyy-MM-dd"
+      }
+    ]
+  },
+
+  "production" : {
+    "database": {
+      "host": "localhost",
+      "user": "root",
+      "password": "",
+      "database": "quras_db"
+    },
+    "node_url": "http://localhost:8989",
+    "log4js": [
+      {
+        "type": "dateFile",
+        "category": "api",
+        "filename": "logs/api.log",
+        "pattern": "-yyyy-MM-dd"
+      },
+      {
+        "type": "dateFile",
+        "category": "explorer",
+        "filename": "logs/explorer.log",
+        "pattern": "-yyyy-MM-dd"
+      }
+    ]
+  }
+}
