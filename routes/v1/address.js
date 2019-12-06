@@ -116,7 +116,7 @@ function getMyAssets(address, res) {
       callback(null, syncConnection);
 		},
 		function getAssetsFromOffset(connection, callback) {
-      var sqlTx = "SELECT register_transaction.*, transactions.block_number, blocks.time FROM register_transaction LEFT JOIN transactions ON register_transaction.txid=transactions.txid LEFT JOIN blocks ON transactions.block_number=blocks.block_number WHERE admin=? ORDER BY transactions.block_number";
+      var sqlTx = "SELECT register_transaction.* FROM register_transaction WHERE admin=? ORDER BY block_number";
 
       try {
         var txsResult = connection.query(sqlTx, [address]);

@@ -27,74 +27,7 @@ module.exports = {
             },
             function getTxHistory(connection, addr, callback) {
                 var likeAddr = '%' + addr + '%';
-                //var sql = 'SELECT contract_transaction._from, contract_transaction._to, contract_transaction.asset, transactions.*, blocks.time FROM contract_transaction left join transactions on contract_transaction.txid=transactions.txid LEFT JOIN blocks ON transactions.block_number=blocks.block_number WHERE _from=? OR _to like ?';`
-                //var sqlTotal = 'SELECT transactions.*, blocks.time as time, claim_transaction.address as claim_transaction_address, claim_transaction.amount as claim_transaction_amount, contract_transaction._from as contract_transaction_from, contract_transaction._to as contract_transaction_to, contract_transaction.asset as contract_transaction_asset, contract_transaction.amount as contract_transaction_amount, contract_transaction.fee as contract_transaction_fee, invocation_transaction.address as invocation_transaction_address, invocation_transaction.gas, issue_transaction.address as issue_transaction_address, issue_transaction._to as issue_transaction_to, issue_transaction.asset as issue_transaction_asset, issue_transaction.amount as issue_transaction_amount, issue_transaction.fee as issue_transaction_fee, register_transaction.name, miner_transaction.address as miner_transaction_address, miner_transaction._to as miner_transaction_to, miner_transaction.amount as miner_transaction_amount FROM transactions LEFT JOIN contract_transaction on contract_transaction.txid=transactions.txid LEFT JOIN blocks ON transactions.block_number=blocks.block_number LEFT JOIN claim_transaction ON transactions.txid=claim_transaction.txid LEFT JOIN invocation_transaction ON transactions.txid=invocation_transaction.txid LEFT JOIN issue_transaction ON transactions.txid=issue_transaction.txid LEFT JOIN register_transaction ON contract_transaction.asset = register_transaction.txid OR issue_transaction.asset = register_transaction.txid LEFT JOIN miner_transaction ON transactions.txid=miner_transaction.txid WHERE contract_transaction._from = ? OR contract_transaction._to = ? OR claim_transaction.address = ? OR invocation_transaction.address = ? OR issue_transaction.address = ? OR issue_transaction._to = ? OR miner_transaction.address = ? OR miner_transaction._to = ? ORDER BY blocks.time ASC';
-                /*var retRows = [];
-                //MinerTransaction
-                var sql = 'SELECT transaction.*, blocks.time as time, miner_transaction.address as miner_transaction_address, miner_transaction._to as miner_transaction_to, miner_transaction.amount as miner_transaction_amount From transactions LEFT JOIN blocks ON transactions.block_number=blocks.block_number LEFT JOIN miner_transaction ON transaction.txid = miner_transaction.txid WHERE miner_transaction._to = ?';
-                connection.query(sql, [addr], function(err, rows) {
-                    if (err) {
-                        callback(err, connection);
-                    } else {
-                        if (rows.length > 0) {
-                            retRows.concat(rows);
-                        }
-                    }
-                });
-                //ClaimTransaction
-                var sql = 'SELECT transaction.*, blocks.time as time, claim_transaction.address as claim_transaction_address, claim_transaction.amount as claim_transaction_amount From transactions LEFT JOIN blocks ON transactions.block_number=blocks.block_number LEFT JOIN claim_transaction ON transaction.txid = claim_transaction.txid WHERE claim_transaction.address = ?';
-                connection.query(sql, [addr], function(err, rows) {
-                    if (err) {
-                        callback(err, connection);
-                    } else {
-                        if (rows.length > 0) {
-                            retRows.concat(rows);
-                        }
-                    }
-                });
-                //ContractTransaction
-                var sql = 'SELECT transaction.*, blocks.time as time, contract_transaction._from as contract_transaction_from, contract_transaction._to as contract_transaction_to, contract_transaction.asset as contract_transaction_asset, contract_transaction.amount as contract_transaction_amount, register_transaction.name From transactions LEFT JOIN blocks ON transactions.block_number=blocks.block_number LEFT JOIN contract_transaction ON transaction.txid = contract_transaction.txid LEFT JOIN register_transaction ON contract_transaction.asset = register_transaction.txid WHERE contract_transaction._from = ? OR contract_transaction._to = ?';
-                connection.query(sql, [addr, addr], function(err, rows) {
-                    if (err) {
-                        callback(err, connection);
-                    } else {
-                        if (rows.length > 0) {
-                            retRows.concat(rows);
-                        }
-                    }
-                });
-                //InvocationTransaction
-                var sql = 'SELECT transaction.*, blocks.time as time, invocation_transaction.address as invocation_transaction_address, invocation_transaction.gas From transactions LEFT JOIN blocks ON transactions.block_number=blocks.block_number LEFT JOIN invocation_transaction ON transaction.txid = invocation_transaction.txid WHERE invocation_transaction.address = ?';
-                connection.query(sql, [addr], function(err, rows) {
-                    if (err) {
-                        callback(err, connection);
-                    } else {
-                        if (rows.length > 0) {
-                            retRows.concat(rows);
-                        }
-                    }
-                });
-                //IssueTransaction
-                var sql = 'SELECT transaction.*, blocks.time as time, issue_transaction.address as issue_transaction_address, issue_transaction._to as issue_transaction_to, issue_transaction.amount as issue_transaction_amount, issue_transaction.fee as issue_transaction_fee From transactions LEFT JOIN blocks ON transactions.block_number=blocks.block_number LEFT JOIN issue_transaction ON transaction.txid = issue_transaction.txid WHERE issue_transaction.address = ? OR issue_transaction._to = ?';
-                connection.query(sql, [addr, addr], function(err, rows) {
-                    if (err) {
-                        callback(err, connection);
-                    } else {
-                        if (rows.length > 0) {
-                            retRows.concat(rows);
-                        }
-                    }
-                });
-
-                if (retRows.length > 0) {
-                    retRows.sort(function(a, b) {
-                        return parseInt(a.time) - parseInt(b.time);
-                    });
-                    callback(null, connection, retRows);
-                } else {
-                    callback("NOTHING", connection);
-                }*/
-                var sql = "SELECT * from tx_history LEFT JOIN register_transaction ON tx_history.contract_transaction_asset = register_transaction.txid OR tx_history.issue_transaction_asset = register_transaction.txid WHERE tx_history.claim_transaction_address = ? OR tx_history.contract_transaction_from = ? OR tx_history.contract_transaction_to = ? OR tx_history.invocation_transaction_address = ? OR tx_history.issue_transaction_address = ? OR tx_history.issue_transaction_to = ? OR tx_history.miner_transaction_address = ? OR tx_history.miner_transaction_to = ?";
+                var sql = "SELECT * from tx_history WHERE claim_transaction_address = ? OR contract_transaction_from = ? OR contract_transaction_to = ? OR invocation_transaction_address = ? OR .issue_transaction_address = ? OR issue_transaction_to = ? OR miner_transaction_address = ? OR miner_transaction_to = ?";
                 connection.query(sql, [addr, addr, addr, addr, addr, addr, addr, addr], function(err, rows) {
                     if (err) {
                         callback(err, connection);
@@ -228,7 +161,7 @@ module.exports = {
                 
                 if (asset != undefined)
                 {
-                    var sql = 'SELECT utxos.*, register_transaction.name FROM utxos LEFT JOIN register_transaction on utxos.asset = register_transaction.txid WHERE address = ? AND asset = ? AND status="unspent"';
+                    var sql = 'SELECT * FROM utxos WHERE address = ? AND asset = ? AND status="unspent"';
                     connection.query(sql, [addr, asset], function(err, rows) {
                         if (err) {
                             callback(err, connection);
@@ -243,7 +176,7 @@ module.exports = {
                 }
                 else
                 {
-                    var sql = 'SELECT utxos.*, register_transaction.name FROM utxos LEFT JOIN register_transaction on utxos.asset = register_transaction.txid WHERE address = ? AND status="unspent"';
+                    var sql = 'SELECT * FROM utxos WHERE address = ? AND status="unspent"';
                     connection.query(sql, [addr], function(err, rows) {
                         if (err) {
                             callback(err, connection);

@@ -38,7 +38,7 @@ function getAssets(offset, limit, res) {
       callback(null, syncConnection, offset, limit);
 		},
 		function getAssetsFromOffset(connection, offset, limit, callback) {
-      var sqlTx = "SELECT register_transaction.*, transactions.block_number, blocks.time FROM register_transaction LEFT JOIN transactions ON register_transaction.txid=transactions.txid LEFT JOIN blocks ON transactions.block_number=blocks.block_number ORDER BY transactions.block_number";
+      var sqlTx = "SELECT register_transaction.* FROM register_transaction ORDER BY block_number";
       if (offset != -1 || limit != -1) {
         sqlTx += " LIMIT ?, ?";
       }
@@ -48,13 +48,13 @@ function getAssets(offset, limit, res) {
 
         var hash = [];
         var index = 0;
-        var sqlIssued = "SELECT utxos.* FROM issue_transaction LEFT JOIN utxos on issue_transaction.txid=utxos.txid WHERE ";
+        var sqlIssued = "SELECT * FROM issue_transaction WHERE ";
         txsResult.forEach(tx => {
           if (index == 0) {
-            sqlIssued += "utxos.asset='" + tx.txid + "'";
+            sqlIssued += "asset='" + tx.txid + "'";
           }
           else {
-            sqlIssued += " OR utxos.asset='" + tx.txid + "'";
+            sqlIssued += " OR asset='" + tx.txid + "'";
           }
           index ++;
         });
@@ -65,7 +65,7 @@ function getAssets(offset, limit, res) {
           var iAmount = 0;
           txsIssued.forEach(issuedItem => {
             if (issuedItem.asset == tx.txid) {
-              iAmount += issuedItem.value;
+              iAmount += issuedItem.amount;
             }
           });
 
@@ -111,8 +111,8 @@ function getAsset(hash, res) {
       callback(null, syncConnection, hash);
 		},
 		function getAssetsFromHash(connection, hash, callback) {
-      var sqlTx = "SELECT register_transaction.*, transactions.block_number, blocks.time FROM register_transaction LEFT JOIN transactions ON register_transaction.txid=transactions.txid LEFT JOIN blocks ON transactions.block_number=blocks.block_number WHERE register_transaction.txid=?";
-      var sqlIssued = "SELECT utxos.* FROM issue_transaction LEFT JOIN utxos on issue_transaction.txid=utxos.txid WHERE utxos.asset=?";
+      var sqlTx = "SELECT register_transaction.* FROM register_transaction WHERE txid=?";
+      var sqlIssued = "SELECT * FROM issue_transaction WHERE asset=?";
       try {
         var txsResult = connection.query(sqlTx, [hash]);
         var txsIssued = connection.query(sqlIssued, [hash]);
