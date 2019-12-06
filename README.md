@@ -10,3 +10,17 @@ nodejs, expressjs, gulp, nodemon
 
 # Content
 This is the server for blockexplorer and js library.
+
+# Running
+Import the modules.
+
+```
+npm install
+```
+
+Then run the api service.
+
+```
+npm start
+```
+
