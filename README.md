@@ -1,3 +1,9 @@
+<p align="center">
+<img
+    src="http://blockapi.quraswallet.org/quras/img/logo1.png"
+    width="200px">
+</p>
+
 # Introduction
 QURAS BLOCKEXPLORER API SERVER
 
