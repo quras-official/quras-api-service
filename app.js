@@ -16,6 +16,7 @@ var v1_txs = require('./routes/v1/txs');
 var v1_status = require('./routes/v1/status');
 var v1_addresses = require('./routes/v1/addresses');
 var v1_assets = require('./routes/v1/assets');
+var v1_file = require('./routes/v1/file');
 
 var app = express();
 
@@ -48,6 +49,7 @@ app.use('/v1/txs', v1_txs);
 app.use('/v1/status', v1_status);
 app.use('/v1/addresses', v1_addresses);
 app.use('/v1/assets', v1_assets);
+app.use('/v1/file',v1_file);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
