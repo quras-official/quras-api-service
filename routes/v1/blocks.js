@@ -52,7 +52,7 @@ function getBlock(height, res) {
 		},
 		function getBlockFromHeight(connection, height, callback) {
       var sqlBlocks = "SELECT * FROM blocks WHERE block_number=?";
-      var sqlTxs = "SELECT transactions.*, blocks.time FROM transactions LEFT JOIN blocks ON transactions.block_number=blocks.block_number WHERE transactions.block_number=?";
+      var sqlTxs = "SELECT transactions.* FROM transactions WHERE block_number=?";
 
       if (height == -1) {
         var bodyErrMsg = ["Page is not a valid integer", "height is not a valid integer"];

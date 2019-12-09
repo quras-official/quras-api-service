@@ -38,7 +38,7 @@ function getTx(txid, res) {
       callback(null, syncConnection, txid);
 		},
 		function getTxFromTxid(connection, txid, callback) {
-      var sqlTx = "SELECT transactions.*, blocks.time, blocks.hash FROM transactions LEFT JOIN blocks ON transactions.block_number=blocks.block_number WHERE txid=?";
+      var sqlTx = "SELECT transactions.* FROM transactions WHERE txid=?";
 
       try {
         var txsResult = connection.query(sqlTx, [txid]);
@@ -46,13 +46,13 @@ function getTx(txid, res) {
         // Get Transaction Exclusive fields
         var exclusive = {};
         if (txsResult[0].tx_type == "MinerTransaction") {
-          var sqlExclusiveTx = "SELECT miner_transaction.*, register_transaction.name FROM miner_transaction LEFT JOIN register_transaction ON register_transaction.name = \'XQG\' WHERE miner_transaction.txid=?";
+          var sqlExclusiveTx = "SELECT miner_transaction.*, \"XQG\" as name FROM miner_transaction WHERE txid=?";
           exclusive = connection.query(sqlExclusiveTx, [txid]);
         } else if (txsResult[0].tx_type == "IssueTransaction") {
-          var sqlExclusiveTx = "SELECT issue_transaction.*, register_transaction.name FROM issue_transaction LEFT JOIN register_transaction ON issue_transaction.asset = register_transaction.txid WHERE issue_transaction.txid=?";
+          var sqlExclusiveTx = "SELECT issue_transaction.* FROM issue_transaction WHERE txid=?";
           exclusive = connection.query(sqlExclusiveTx, [txid]);
         } else if (txsResult[0].tx_type == "ClaimTransaction") {
-          var sqlExclusiveTx = "SELECT claim_transaction.*, register_transaction.name FROM claim_transaction LEFT JOIN register_transaction ON register_transaction.name=\'XQG\' WHERE claim_transaction.txid=?";
+          var sqlExclusiveTx = "SELECT claim_transaction.*, \"XQG\" as name FROM claim_transaction WHERE txid=?";
           exclusive = connection.query(sqlExclusiveTx, [txid]);
         } else if (txsResult[0].tx_type == "EnrollmentTransaction") {
           var sqlExclusiveTx = "SELECT * FROM enrollment_transaction WHERE txid=?";
@@ -61,7 +61,7 @@ function getTx(txid, res) {
           var sqlExclusiveTx = "SELECT * FROM register_transaction WHERE txid=?";
           exclusive = connection.query(sqlExclusiveTx, [txid]);
         } else if (txsResult[0].tx_type == "ContractTransaction") {
-          var sqlExclusiveTx = "SELECT contract_transaction.*, register_transaction.name FROM contract_transaction LEFT JOIN register_transaction ON contract_transaction.asset = register_transaction.txid WHERE contract_transaction.txid=?";
+          var sqlExclusiveTx = "SELECT contract_transaction.* FROM contract_transaction WHERE txid=?";
           exclusive = connection.query(sqlExclusiveTx, [txid]);
         } else if (txsResult[0].tx_type == "AnonymousContractTransaction") {
           var sqlExclusiveTx = "SELECT * FROM anonymous_contract_transaction WHERE txid=?";
@@ -78,7 +78,7 @@ function getTx(txid, res) {
         var vins = JSON.parse(txsResult[0].vin);
         var vouts = JSON.parse(txsResult[0].vout);
 
-        var sqlFindUtxos = "SELECT utxos.*, register_transaction.name, register_transaction.txid FROM `utxos` RIGHT JOIN register_transaction ON utxos.asset = register_transaction.txid WHERE ";
+        var sqlFindUtxos = "SELECT utxos.* FROM utxos WHERE ";
 
         var vinUtxos;
         if (vins.length > 0) {
@@ -100,7 +100,7 @@ function getTx(txid, res) {
         
         var voutUtxos;
         if (vouts.length > 0) {
-          sqlFindUtxos = "SELECT utxos.*, register_transaction.name, register_transaction.txid FROM `utxos` RIGHT JOIN register_transaction ON utxos.asset = register_transaction.txid WHERE ";
+          sqlFindUtxos = "SELECT utxos.* FROM utxos WHERE ";
           index = 0;
           vouts.forEach(vout => {
             var sqlWhere = "";
@@ -153,7 +153,7 @@ function getTx(txid, res) {
 function getTransactions(offset, limit, res) {
 	async.waterfall([
 		function getTxsFromParams(callback) {
-      var sqlTxs = "SELECT transactions.*, blocks.time FROM transactions LEFT JOIN blocks ON transactions.block_number=blocks.block_number ORDER BY block_number DESC LIMIT ?";
+      var sqlTxs = "SELECT transactions.* FROM transactions ORDER BY block_number DESC LIMIT ?";
 
       if (offset == -2 && limit == -2) {
         var bodyErrMsg = ["Page is not a valid integer", "Offset parameter and limit parameter are not a valid integer"];
