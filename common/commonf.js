@@ -27,7 +27,7 @@ module.exports = {
             },
             function getTxHistory(connection, addr, callback) {
                 var likeAddr = '%' + addr + '%';
-                var sql = "SELECT * from tx_history WHERE claim_transaction_address = ? OR contract_transaction_from = ? OR contract_transaction_to = ? OR invocation_transaction_address = ? OR .issue_transaction_address = ? OR issue_transaction_to = ? OR miner_transaction_address = ? OR miner_transaction_to = ?";
+                var sql = "SELECT * from tx_history WHERE claim_transaction_address = ? OR contract_transaction_from = ? OR contract_transaction_to = ? OR invocation_transaction_address = ? OR issue_transaction_address = ? OR issue_transaction_to = ? OR miner_transaction_address = ? OR miner_transaction_to = ?";
                 connection.query(sql, [addr, addr, addr, addr, addr, addr, addr, addr], function(err, rows) {
                     if (err) {
                         callback(err, connection);
@@ -801,7 +801,7 @@ module.exports = {
         });
         return formatedNodes;
     },
-    getFormatedAddress: function(addresses, address, unclaimed) {
+    getFormatedAddress: function(addresses, address, txs, unclaimed) {
         var formatedAddresses = {};
         var balances = [];
         var transactions = [];
@@ -841,29 +841,12 @@ module.exports = {
                     balances.push(balance);
                 }
             }
-
-            var transaction = {
-                type: addr.tx_type,
-                txid: addr.txid,
-                block_time: addr.time
-            };
-
-            var isExist = false;
-            transactions.forEach(tx => {
-                if (tx.txid == transaction.txid) {
-                    isExist = true;
-                }
-            });
-            
-            if (!isExist) {
-                transactions.push(transaction);
-            }
         });
 
         formatedAddresses.balances = balances;
         formatedAddresses.unclaimed = unclaimed;
-        formatedAddresses.transactions = transactions;
         formatedAddresses.transfers = transfers;  
+        formatedAddresses.transactions = txs;
         return formatedAddresses;
     },
     getFormatedAsset: function(asset, issuedAmount, addresses, transactions, transfers) {
