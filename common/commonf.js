@@ -27,8 +27,8 @@ module.exports = {
             },
             function getTxHistory(connection, addr, callback) {
                 var likeAddr = '%' + addr + '%';
-                var sql = "SELECT * from tx_history WHERE claim_transaction_address = ? OR contract_transaction_from = ? OR contract_transaction_to = ? OR invocation_transaction_address = ? OR issue_transaction_address = ? OR issue_transaction_to = ? OR miner_transaction_address = ? OR miner_transaction_to = ?";
-                connection.query(sql, [addr, addr, addr, addr, addr, addr, addr, addr], function(err, rows) {
+                var sql = "SELECT * from tx_history WHERE claim_transaction_address = ? OR contract_transaction_from = ? OR contract_transaction_to = ? OR invocation_transaction_address = ? OR issue_transaction_address = ? OR issue_transaction_to = ? OR miner_transaction_address = ? OR miner_transaction_to = ? OR uploadrequest_transaction_upload_address = ? OR downloadrequest_transaction_upload_address = ? OR downloadrequest_transaction_download_address = ? OR approvedownload_transaction_approve_address = ? OR approvedownload_transaction_download_address = ? OR payfile_transaction_download_address = ? OR payfile_transaction_upload_address = ?";
+                connection.query(sql, [addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr], function(err, rows) {
                     if (err) {
                         callback(err, connection);
                     } else {
