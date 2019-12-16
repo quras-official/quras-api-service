@@ -22,7 +22,7 @@ API Server accept the request and post result to API clients.
 # Running
 First, import the runtime modules. 
 
-_API Server requires JS runtime, npm or any other JS runtime is required._
+_API Server requires JS runtime - npm or any other JS runtime is required._
 
 ```
 npm install
