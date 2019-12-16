@@ -5,17 +5,19 @@
 </p>
 
 # Introduction
-QURAS BLOCKEXPLORER API SERVER
+This repository contains API server for blockexplorer and js library in Quras.
 
-Copyright 2018 QURAS
+When users call API functions using _Quras-JS_ library, functions send request to API Server.
 
-MIT License
+API Server accept the request and post result to API clients.
 
-# Keyword
-nodejs, expressjs, gulp, nodemon
 
-# Content
-This is the server for blockexplorer and js library.
+## Runtime Environment
+|OS Type|Version|
+|---|---|
+|Windows|any|
+|linux|any|
+|other|any OS that supports npm environment|
 
 # Running
 Import the modules.
@@ -29,4 +31,15 @@ Then run the api service.
 ```
 npm start
 ```
+
+# Keyword
+nodejs, expressjs, gulp, nodemon
+
+# Copyright
+QURAS BLOCKEXPLORER API SERVER
+
+Copyright 2018 QURAS
+
+MIT License
+
 
