@@ -123,7 +123,7 @@ function getAsset(hash, res) {
         var transfers = [];
 
         txsIssued.forEach(txIssued => {
-          issuedAsset += txIssued.value;
+          issuedAsset += txIssued.amount;
         });
 
         var retTx = commonf.getFormatedAsset(txsResult[0], issuedAsset, addresses, transactions, transfers);
