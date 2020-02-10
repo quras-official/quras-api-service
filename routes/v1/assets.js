@@ -104,7 +104,7 @@ function getAssets(offset, limit, res) {
 	);
 }
 
-function getAsset(hash, res) {
+function getAsset(hash, offset, limit, res) {
 	async.waterfall([
 		function getConn(callback) {
       
@@ -113,20 +113,35 @@ function getAsset(hash, res) {
 		function getAssetsFromHash(connection, hash, callback) {
       var sqlTx = "SELECT register_transaction.* FROM register_transaction WHERE txid=?";
       var sqlIssued = "SELECT * FROM issue_transaction WHERE asset=?";
+      var sqlHolders = "SELECT address, balance FROM holders WHERE asset=? ORDER BY balance DESC LIMIT ?, ?";
+      var sqlTotalHolders = "SELECT address FROM holders WHERE asset=?";
       try {
         var txsResult = connection.query(sqlTx, [hash]);
         var txsIssued = connection.query(sqlIssued, [hash]);
+        var holdersReults = connection.query(sqlHolders, [hash, offset, limit]);
+        var totalholdersReults = connection.query(sqlTotalHolders, [hash]);
 
         var issuedAsset = 0;
         var transactions = [];
         var addresses = [];
         var transfers = [];
+        var holders = [];
+        var totalAmount = txsResult[0].amount;
+        var totalHoldersCnt = totalholdersReults.length;
 
         txsIssued.forEach(txIssued => {
           issuedAsset += txIssued.amount;
         });
 
-        var retTx = commonf.getFormatedAsset(txsResult[0], issuedAsset, addresses, transactions, transfers);
+        holdersReults.forEach(holderResult => {
+          holders.push({
+            address : holderResult.address,
+            balance : holderResult.balance,
+            percentage : (holderResult.balance  * 100) / totalAmount
+          });
+        });
+
+        var retTx = commonf.getFormatedAsset(txsResult[0], issuedAsset, addresses, transactions, transfers, holders, totalHoldersCnt);
         callback(null, connection, constants.ERR_CONSTANTS.success, retTx);
       }
       catch(err) {
@@ -191,10 +206,31 @@ router.get('/all', function(req, res, next){
   getAssets(offset, limit, res);
 });
 
-router.get('/:hash', function(req, res, next){
+router.get('/:hash/:offset/:limit', function(req, res, next){
   var hash = req.params.hash;
+  var offset = req.params.offset;
+  var limit = req.params.limit;
+
+  if (commonf.isNumber(offset)) {
+    offset = Number.parseInt(offset, 10);
+  } else {
+    offset = -1;
+  }
+
+  if (commonf.isNumber(limit)) {
+    limit = Number.parseInt(limit, 10);
+  } else {
+    limit = -1;
+  }
 
   console.log("Get assets api was called, Params => Hash : " + hash);
-  getAsset(hash, res);
+  getAsset(hash, offset, limit, res);
+});
+
+router.get('/:hash', function(req, res, next){
+  var hash = req.params.hash;
+  
+  console.log("Get assets api was called, Params => Hash : " + hash);
+  getAsset(hash, 0, 20, res);
 });
 module.exports = router;

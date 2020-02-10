@@ -849,7 +849,7 @@ module.exports = {
         formatedAddresses.transactions = txs;
         return formatedAddresses;
     },
-    getFormatedAsset: function(asset, issuedAmount, addresses, transactions, transfers) {
+    getFormatedAsset: function(asset, issuedAmount, addresses, transactions, transfers, holders, totalHoldresCnt) {
         var formatedAsset = {};
         formatedAsset.hash = asset.txid.slice(2);
         formatedAsset.type = asset.type;
@@ -864,6 +864,8 @@ module.exports = {
         formatedAsset.addresses = addresses;
         formatedAsset.transactions = transactions;
         formatedAsset.transfers = transfers;
+        formatedAsset.holders = holders;
+        formatedAsset.holders_cnt = totalHoldresCnt;
 
         return formatedAsset;
     },
