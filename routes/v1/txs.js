@@ -176,6 +176,11 @@ function getTransactions(offset, limit, res) {
           var txsResult = syncConnection.query(sqlTxs, [limit]);
           var retTxs = [];
 
+          if (txsResult == null) {
+            var bodyErrMsg = ["Connection Error"];
+            callback(bodyErrMsg, syncConnection, constants.ERR_CONSTANTS.db_connection_err);
+          }
+
           txsResult.forEach(tx => {
             retTxs.push(commonf.getFormatedTx(tx));
           });
