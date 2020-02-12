@@ -12,6 +12,7 @@ var async = require('async');
 var constants = require('../constants.js');
 var promisify = require('deferred').promisify;
 var syncMysql = require('sync-mysql');
+var mysql = require('mysql');
 
 // log4js
 var log4js = require('log4js');
@@ -51,10 +52,10 @@ function getAssets(offset, limit, res) {
         var sqlIssued = "SELECT * FROM issue_transaction WHERE ";
         txsResult.forEach(tx => {
           if (index == 0) {
-            sqlIssued += "asset='" + tx.txid + "'";
+            sqlIssued += "asset=" + mysql.escape(tx.txid) + "";
           }
           else {
-            sqlIssued += " OR asset='" + tx.txid + "'";
+            sqlIssued += " OR asset=" + mysql.escape(tx.txid) + "";
           }
           index ++;
         });

@@ -13,6 +13,7 @@ var controller = require('../../controllers/ExplorerController');
 var async = require('async');
 var syncMysql = require('sync-mysql');
 var syncConnection = new syncMysql(config.database);
+var mysql = require('mysql');
 
 // log4js
 var log4js = require('log4js');
@@ -125,10 +126,10 @@ function getMyAssets(address, res) {
         var sqlWhere = '';
         txsResult.forEach(tx => {
           if (sqlWhere.length == 0) {
-            sqlWhere += "asset='" + tx.txid + "'";
+            sqlWhere += "asset=" + mysql.escape(tx.txid) + "";
           }
           else {
-            sqlWhere += " OR asset='" + tx.txid + "'";
+            sqlWhere += " OR asset=" + mysql.escape(tx.txid) + "";
           }
         });
 

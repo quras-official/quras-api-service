@@ -12,6 +12,7 @@ var async = require('async');
 var constants = require('../constants.js');
 var promisify = require('deferred').promisify;
 var syncMysql = require('sync-mysql');
+var mysql = require('mysql');
 
 // log4js
 var log4js = require('log4js');
@@ -86,9 +87,9 @@ function getTx(txid, res) {
           vins.forEach(vin => {
             var sqlWhere = "";
             if (index == 0) {
-              sqlWhere = "(utxos.txid='" + vin.txid + "' AND tx_out_index=" + vin.vout + ")";
+              sqlWhere = "(utxos.txid=" + mysql.escape(vin.txid) + " AND tx_out_index=" + mysql.escape(vin.vout) + ")";
             } else {
-              sqlWhere = " OR (utxos.txid='" + vin.txid + "' AND tx_out_index=" + vin.vout + ")";
+              sqlWhere = " OR (utxos.txid=" + mysql.escape(vin.txid) + " AND tx_out_index=" +  mysql.escape(vin.vout) + ")";
             }
             sqlFindUtxos += sqlWhere;
             index ++;

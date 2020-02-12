@@ -12,6 +12,7 @@ var async = require('async');
 var constants = require('../constants.js');
 var promisify = require('deferred').promisify;
 var syncMysql = require('sync-mysql');
+var mysql = require('mysql');
 
 // log4js
 var log4js = require('log4js');
@@ -84,9 +85,9 @@ function getAddress(address, res) {
           var index = 0;
           retTx.balances.forEach(balance => {
             if (index == 0) {
-              sqlAssetName += " txid='" + balance.asset_hash + "'";
+              sqlAssetName += " txid=" + mysql.escape(balance.asset_hash) + "";
             } else {
-              sqlAssetName += " OR txid='" + balance.asset_hash + "'";
+              sqlAssetName += " OR txid=" + mysql.escape(balance.asset_hash) + "";
             }
             index ++;
           });
