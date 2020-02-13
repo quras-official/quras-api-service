@@ -30,44 +30,17 @@ var syncConnection = new syncMysql(config.database);
 var generator = require('generate-password');
 var crypto = require("crypto");
 
-function getfile(res) {
-  async.waterfall([
-		function getConn(callback) {
-      
-      callback(null, syncConnection);
-    },
-    function getfilelist(connection, callback) {
-      var sqlTx = "SELECT upload_request_transaction.* FROM upload_request_transaction";
+async function getfile(res) {
+  var sqlTx = "SELECT upload_request_transaction.* FROM upload_request_transaction";
 
-      try {
-        var fileResult = connection.query(sqlTx);
-        callback(null, syncConnection, constants.ERR_CONSTANTS.success, fileResult);
-      }
-      catch(err) {
-        var bodyErrMsg = ["Connection Error"];
-        callback(bodyErrMsg, syncConnection, constants.ERR_CONSTANTS.db_connection_err);
-      }
-    }
-    ],
-    function(err, connection, code, result) {
-			var body;
-
-			if (err)
-			{
-				body = {"errors": err};
-        logger.info(err, code);
-        var result = JSON.stringify(body);
-        res.setHeader('content-type', 'text/plain');
-        res.status(200).send(result);
-			}
-			else
-			{
-        body = result;
-        var result = JSON.stringify(body);
-        res.setHeader('content-type', 'text/plain');
-        res.status(200).send(result);
-			}
-		});
+  try {
+    var fileResult = (await mysqlPool.query(sqlTx))[0];
+    res = commonf.buildResponse(null, constants.ERR_CONSTANTS.success, fileResult, res);
+  }
+  catch(err) {
+    var bodyErrMsg = ["Connection Error"];
+    res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_not_found_err, null, res);
+  }
 }
 router.get('/all', function(req, res, next){
     var privKey = req.query.privkey;

@@ -13,197 +13,78 @@ module.exports = {
     getQRG: function(){
         return QRG;
     },
-    getTransactionHistory: function(pool, async, addr, _callback) {
-        async.waterfall([
-            function getConn(callback) {
-                pool.getConnection(function(err,conn) {
-                    var connection = conn;
-                    if (err) {
-                        callback(err, connection);
-                    } else {
-                        callback(null, connection, addr);
-                    }
-                });
-            },
-            function getTxHistory(connection, addr, callback) {
-                var likeAddr = '%' + addr + '%';
-                var sql = "SELECT * from tx_history WHERE claim_transaction_address = ? OR contract_transaction_from = ? OR contract_transaction_to = ? OR invocation_transaction_address = ? OR issue_transaction_address = ? OR issue_transaction_to = ? OR miner_transaction_address = ? OR miner_transaction_to = ? OR uploadrequest_transaction_upload_address = ? OR downloadrequest_transaction_upload_address = ? OR downloadrequest_transaction_download_address = ? OR approvedownload_transaction_approve_address = ? OR approvedownload_transaction_download_address = ? OR payfile_transaction_download_address = ? OR payfile_transaction_upload_address = ? ORDER BY time DESC LIMIT 0, 30";
-                connection.query(sql, [addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr], function(err, rows) {
-                    if (err) {
-                        callback(err, connection);
-                    } else {
-                        if (rows.length > 0) {
-                            callback(null, connection, rows);
-                        } else {
-                            callback("NOTHING", connection);
-                        }
-                    }
-                });
-            }
-        ],
-            function (err, connection, unspents)
-            {
-                if (connection) {
-                    connection.release();
-                }
-
-                if (err) {
-                    _callback(err, null);
-                } else {
-                    _callback(null, unspents);
-                }
-            }
-        );
+    getTransactionHistory: async function(pool, async, addr, _callback) {
+        var likeAddr = '%' + addr + '%';
+        var sql = "SELECT * from tx_history WHERE claim_transaction_address = ? OR contract_transaction_from = ? OR contract_transaction_to = ? OR invocation_transaction_address = ? OR issue_transaction_address = ? OR issue_transaction_to = ? OR miner_transaction_address = ? OR miner_transaction_to = ? OR uploadrequest_transaction_upload_address = ? OR downloadrequest_transaction_upload_address = ? OR downloadrequest_transaction_download_address = ? OR approvedownload_transaction_approve_address = ? OR approvedownload_transaction_download_address = ? OR payfile_transaction_download_address = ? OR payfile_transaction_upload_address = ? ORDER BY time DESC LIMIT 0, 30";
+        var rows = (await pool.query(sql, [addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr]))[0];
+        if (rows.length < 0) {
+            _callback("ERROR", []);
+        } else if (rows.length == 0) {
+            _callback("NOTHING", []);
+        } else {
+            _callback(null, rows);
+        }
     },
-    getRpcNodesInfo: function(pool, async, _callback) {
-        async.waterfall([
-            function getConn(callback) {
-                pool.getConnection(function(err,conn) {
-                    var connection = conn;
-                    if (err) {
-                        callback(err, connection);
-                    } else {
-                        callback(null, connection,);
-                    }
-                });
-            },
-            function getNodesList(connection, callback) {
-                var sql = 'SELECT * FROM nodes';
-                connection.query(sql, [], function(err, rows) {
-                    if (err) {
-                        callback(err, connection);
-                    } else {
-                        if (rows.length > 0) {
-                            callback(null, connection, rows);
-                        } else {
-                            callback("NOTHING", connection);
-                        }
-                    }
-                });
+    getRpcNodesInfo: async function(pool, async, _callback) {
+        try {
+            var sql = 'SELECT * FROM nodes';
+            var rows = (await mysqlPool.query(sql, []))[0];
+            if (rows.length < 0) {
+                _callback("Connection Error", null);
+            } else if (rows.length == 0) {
+                _callback("NOTHING", []);
+            } else {
+                _callback(null, rows);
             }
-        ],
-            function (err, connection, nodes)
-            {
-                if (connection) {
-                    connection.release();
-                }
-
-                if (err) {
-                    _callback(err, null);
-                } else {
-                    _callback(null, nodes);
-                }
-            }
-        );
+        } catch (err) {
+            _callback("Connection Error", null);
+        }
     },
-    getCurrentBlockHeight: function(pool, async, _callback) {
-        async.waterfall([
-            function getConn(callback) {
-                pool.getConnection(function(err,conn) {
-                    var connection = conn;
-                    if (err) {
-                        callback(err, connection);
-                    } else {
-                        callback(null, connection,);
-                    }
-                });
-            },
-            function getBlockHeight(connection, callback) {
-                var sql = 'SELECT * FROM status WHERE id = 0';
-                connection.query(sql, [], function(err, rows) {
-                    if (err) {
-                        callback(err, connection);
-                    } else {
-                        if (rows.length > 0) {
-                            callback(null, connection, rows[0]["current_block_number"]);
-                        } else {
-                            callback("NOTHING", connection);
-                        }
-                    }
-                });
+    getCurrentBlockHeight: async function(pool, async, _callback) {
+        try {
+            var sql = 'SELECT * FROM status WHERE id = 0';
+            var rows = (await mysqlPool.query(sql, []))[0];
+        
+            if (rows.length < 0) {
+                _callback(err, null);
+            } else if (rows.length == 0) {
+                _callback("NOTHING", null);
+            } else {
+                _callback(null, rows[0]["current_block_number"]);
             }
-        ],
-            function (err, connection, height)
-            {
-                if (connection) {
-                    connection.release();
-                }
-
-                if (err) {
-                    _callback(err, null);
-                } else {
-                    _callback(null, height);
-                }
-            }
-        );
+        } catch (err) {
+            _callback(err, null);
+        }
     },
-    getUnspent: function(pool, async, addr, asset, _callback) {
-        async.waterfall([
-            function getConn(callback) {
-                pool.getConnection(function(err,conn) {
-                    var connection = conn;
-                    if (err) {
-                        callback(err, connection);
-                    } else {
-                        callback(null, connection, addr, asset);
-                    }
-                });
-            },
-            function getUnspentList(connection, addr, asset, callback) {
-                if (asset == 'MOD')
-                {
-                    asset = MOD;
-                }
-                else if (asset == 'MODC')
-                {
-                    asset = MODC;
-                }
-                
-                if (asset != undefined)
-                {
-                    var sql = 'SELECT * FROM utxos WHERE address = ? AND asset = ? AND status="unspent"';
-                    connection.query(sql, [addr, asset], function(err, rows) {
-                        if (err) {
-                            callback(err, connection);
-                        } else {
-                            if (rows.length > 0) {
-                                callback(null, connection, rows);
-                            } else {
-                                callback("NOTHING", connection);
-                            }
-                        }
-                    });
-                }
-                else
-                {
-                    var sql = 'SELECT * FROM utxos WHERE address = ? AND status="unspent"';
-                    connection.query(sql, [addr], function(err, rows) {
-                        if (err) {
-                            callback(err, connection);
-                        } else {
-                            if (rows.length > 0) {
-                                callback(null, connection, rows);
-                            } else {
-                                callback("NOTHING", connection);
-                            }
-                        }
-                    });
-                }
-            }
-        ],
-            function (err, connection, unspents)
+    getUnspent: async function(pool, async, addr, asset, _callback) {    
+        try {
+            if (asset != undefined)
             {
-                if (connection) {
-                    connection.release();
-                }
-
-                if (err) {
-                    _callback(err, null);
+                var sql = 'SELECT * FROM utxos WHERE address = ? AND asset = ? AND status="unspent"';
+                var rows = (await pool.query(sql, [addr, asset]))[0];
+                if (rows.length < 0) {
+                    _callback("ERROR", []);
+                } else if (rows.length == 0) {
+                    _callback("NOTHING", []);
                 } else {
-                    _callback(null, unspents);
+                    _callback(null, rows);
                 }
             }
-        );
+            else
+            {
+                var sql = 'SELECT * FROM utxos WHERE address = ? AND status="unspent"';
+                var rows = (await pool.query(sql, [addr]))[0];
+                if (rows.length < 0) {
+                    _callback("ERROR", []);
+                } else if (rows.length == 0) {
+                    _callback("NOTHING", []);
+                } else {
+                    _callback(null, rows);
+                }
+            }
+        } catch (err) {
+            _callback("ERROR", []);
+        }
     },
     getTotals: function(pool, web3, async, _callback) {
         async.waterfall([
@@ -918,5 +799,25 @@ module.exports = {
         
         formatedAsset.assets = iAssets;
         return formatedAsset;
+    }, 
+    buildResponse: function(err, code, result, res) {
+        var body;
+
+        if (err)
+        {
+            body = {"errors": err};
+            var result = JSON.stringify(body);
+            res.setHeader('content-type', 'text/plain');
+            res.status(200).send(result);
+        }
+        else
+        {
+            body = result;
+            var result = JSON.stringify(body);
+            res.setHeader('content-type', 'text/plain');
+            res.status(200).send(result);
+        }
+
+        return res;
     }
 };

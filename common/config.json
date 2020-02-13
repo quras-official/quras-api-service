@@ -4,7 +4,10 @@
       "host": "localhost",
       "user": "root",
       "password": "",
-      "database": "quras_db"
+      "database": "quras_db",
+      "waitForConnections": true,
+      "connectionLimit": 10,
+      "queueLimit": 0
     },
     "node_url": "http://localhost:8989",
     "web_server_url": "ws://127.0.0.1:8000",
@@ -29,7 +32,10 @@
       "host": "localhost",
       "user": "root",
       "password": "",
-      "database": "quras_db"
+      "database": "quras_db",
+      "waitForConnections": true,
+      "connectionLimit": 10,
+      "queueLimit": 0
     },
     "node_url": "http://localhost:8989",
     "log4js": [

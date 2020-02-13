@@ -32,206 +32,153 @@ var syncConnection = new syncMysql(config.database);
 var generator = require('generate-password');
 var crypto = require("crypto");
 
-function getTx(txid, res) {
-	async.waterfall([
-		function getConn(callback) {
-      
-      callback(null, syncConnection, txid);
-		},
-		function getTxFromTxid(connection, txid, callback) {
-      var sqlTx = "SELECT transactions.* FROM transactions WHERE txid=?";
+async function getTx(txid, res) {
+  var sqlTx = "SELECT transactions.* FROM transactions WHERE txid=?";
 
-      try {
-        var txsResult = connection.query(sqlTx, [txid]);
+  try {
+    var txsResult = (await mysqlPool.query(sqlTx, [txid]))[0];
 
-        // Get Transaction Exclusive fields
-        var exclusive = {};
-        if (txsResult[0].tx_type == "MinerTransaction") {
-          var sqlExclusiveTx = "SELECT miner_transaction.*, \"XQG\" as name FROM miner_transaction WHERE txid=?";
-          exclusive = connection.query(sqlExclusiveTx, [txid]);
-        } else if (txsResult[0].tx_type == "IssueTransaction") {
-          var sqlExclusiveTx = "SELECT issue_transaction.* FROM issue_transaction WHERE txid=?";
-          exclusive = connection.query(sqlExclusiveTx, [txid]);
-        } else if (txsResult[0].tx_type == "ClaimTransaction") {
-          var sqlExclusiveTx = "SELECT claim_transaction.*, \"XQG\" as name FROM claim_transaction WHERE txid=?";
-          exclusive = connection.query(sqlExclusiveTx, [txid]);
-        } else if (txsResult[0].tx_type == "EnrollmentTransaction") {
-          var sqlExclusiveTx = "SELECT * FROM enrollment_transaction WHERE txid=?";
-          exclusive = connection.query(sqlExclusiveTx, [txid]);
-        } else if (txsResult[0].tx_type == "RegisterTransaction") {
-          var sqlExclusiveTx = "SELECT * FROM register_transaction WHERE txid=?";
-          exclusive = connection.query(sqlExclusiveTx, [txid]);
-        } else if (txsResult[0].tx_type == "ContractTransaction") {
-          var sqlExclusiveTx = "SELECT contract_transaction.* FROM contract_transaction WHERE txid=?";
-          exclusive = connection.query(sqlExclusiveTx, [txid]);
-        } else if (txsResult[0].tx_type == "AnonymousContractTransaction") {
-          var sqlExclusiveTx = "SELECT * FROM anonymous_contract_transaction WHERE txid=?";
-          exclusive = connection.query(sqlExclusiveTx, [txid]);
-        } else if (txsResult[0].tx_type == "PublishTransaction") {
-          var sqlExclusiveTx = "SELECT * FROM publish_transaction WHERE txid=?";
-          exclusive = connection.query(sqlExclusiveTx, [txid]);
-        } else if (txsResult[0].tx_type == "InvocationTransaction") {
-          var sqlExclusiveTx = "SELECT * FROM invocation_transaction WHERE txid=?";
-          exclusive = connection.query(sqlExclusiveTx, [txid]);
-        }
+    // Get Transaction Exclusive fields
+    var exclusive = {};
+    if (txsResult[0].tx_type == "MinerTransaction") {
+      var sqlExclusiveTx = "SELECT miner_transaction.*, \"XQG\" as name FROM miner_transaction WHERE txid=?";
+      exclusive = (await mysqlPool.query(sqlExclusiveTx, [txid]))[0];
+    } else if (txsResult[0].tx_type == "IssueTransaction") {
+      var sqlExclusiveTx = "SELECT issue_transaction.* FROM issue_transaction WHERE txid=?";
+      exclusive = (await mysqlPool.query(sqlExclusiveTx, [txid]))[0];
+    } else if (txsResult[0].tx_type == "ClaimTransaction") {
+      var sqlExclusiveTx = "SELECT claim_transaction.*, \"XQG\" as name FROM claim_transaction WHERE txid=?";
+      exclusive = (await mysqlPool.query(sqlExclusiveTx, [txid]))[0];
+    } else if (txsResult[0].tx_type == "EnrollmentTransaction") {
+      var sqlExclusiveTx = "SELECT * FROM enrollment_transaction WHERE txid=?";
+      exclusive = (await mysqlPool.query(sqlExclusiveTx, [txid]))[0];
+    } else if (txsResult[0].tx_type == "RegisterTransaction") {
+      var sqlExclusiveTx = "SELECT * FROM register_transaction WHERE txid=?";
+      exclusive = (await mysqlPool.query(sqlExclusiveTx, [txid]))[0];
+    } else if (txsResult[0].tx_type == "ContractTransaction") {
+      var sqlExclusiveTx = "SELECT contract_transaction.* FROM contract_transaction WHERE txid=?";
+      exclusive = (await mysqlPool.query(sqlExclusiveTx, [txid]))[0];
+    } else if (txsResult[0].tx_type == "AnonymousContractTransaction") {
+      var sqlExclusiveTx = "SELECT * FROM anonymous_contract_transaction WHERE txid=?";
+      exclusive = (await mysqlPool.query(sqlExclusiveTx, [txid]))[0];
+    } else if (txsResult[0].tx_type == "PublishTransaction") {
+      var sqlExclusiveTx = "SELECT * FROM publish_transaction WHERE txid=?";
+      exclusive = (await mysqlPool.query(sqlExclusiveTx, [txid]))[0];
+    } else if (txsResult[0].tx_type == "InvocationTransaction") {
+      var sqlExclusiveTx = "SELECT * FROM invocation_transaction WHERE txid=?";
+      exclusive = (await mysqlPool.query(sqlExclusiveTx, [txid]))[0];
+    }
 
-        // Get vin and vout fields.
-        var vins = JSON.parse(txsResult[0].vin);
-        var vouts = JSON.parse(txsResult[0].vout);
+    // Get vin and vout fields.
+    var vins = JSON.parse(txsResult[0].vin);
+    var vouts = JSON.parse(txsResult[0].vout);
 
-        var sqlFindUtxos = "SELECT utxos.* FROM utxos WHERE ";
+    var sqlFindUtxos = "SELECT utxos.* FROM utxos WHERE ";
 
-        var vinUtxos;
-        if (vins.length > 0) {
-          var index = 0;
-          vins.forEach(vin => {
-            var sqlWhere = "";
-            if (index == 0) {
-              sqlWhere = "(utxos.txid=" + mysql.escape(vin.txid) + " AND tx_out_index=" + mysql.escape(vin.vout) + ")";
-            } else {
-              sqlWhere = " OR (utxos.txid=" + mysql.escape(vin.txid) + " AND tx_out_index=" +  mysql.escape(vin.vout) + ")";
-            }
-            sqlFindUtxos += sqlWhere;
-            index ++;
-          });
-          vinUtxos = connection.query(sqlFindUtxos, []);
+    var vinUtxos;
+    if (vins.length > 0) {
+      var index = 0;
+      vins.forEach(vin => {
+        var sqlWhere = "";
+        if (index == 0) {
+          sqlWhere = "(utxos.txid=" + mysql.escape(vin.txid) + " AND tx_out_index=" + mysql.escape(vin.vout) + ")";
         } else {
-          vinUtxos = [];
+          sqlWhere = " OR (utxos.txid=" + mysql.escape(vin.txid) + " AND tx_out_index=" +  mysql.escape(vin.vout) + ")";
         }
-        
-        var voutUtxos;
-        if (vouts.length > 0) {
-          sqlFindUtxos = "SELECT utxos.* FROM utxos WHERE ";
-          index = 0;
-          vouts.forEach(vout => {
-            var sqlWhere = "";
-            if (index == 0) {
-              sqlWhere = "(utxos.txid='" + txid + "' AND tx_out_index=" + vout.n + ")";
-            } else {
-              sqlWhere = " OR (utxos.txid='" + txid + "' AND tx_out_index=" + vout.n + ")";
-            }
-            sqlFindUtxos += sqlWhere;
-            index ++;
-          });
-          voutUtxos = connection.query(sqlFindUtxos, []);
+        sqlFindUtxos += sqlWhere;
+        index ++;
+      });
+      vinUtxos = (await mysqlPool.query(sqlFindUtxos, []))[0];
+    } else {
+      vinUtxos = [];
+    }
+    
+    var voutUtxos;
+    if (vouts.length > 0) {
+      sqlFindUtxos = "SELECT utxos.* FROM utxos WHERE ";
+      index = 0;
+      vouts.forEach(vout => {
+        var sqlWhere = "";
+        if (index == 0) {
+          sqlWhere = "(utxos.txid='" + txid + "' AND tx_out_index=" + vout.n + ")";
         } else {
-          voutUtxos = [];
+          sqlWhere = " OR (utxos.txid='" + txid + "' AND tx_out_index=" + vout.n + ")";
         }
-        
-        var retTx = commonf.getFormatedTxInDetails(txsResult[0], vinUtxos, voutUtxos, exclusive);
+        sqlFindUtxos += sqlWhere;
+        index ++;
+      });
+      voutUtxos = (await mysqlPool.query(sqlFindUtxos, []))[0];
+    } else {
+      voutUtxos = [];
+    }
+    
+    var retTx = commonf.getFormatedTxInDetails(txsResult[0], vinUtxos, voutUtxos, exclusive);
 
-        var body = retTx;
-        callback(null, connection, constants.ERR_CONSTANTS.success, body);
-      }
-      catch(err) {
-        var bodyErrMsg = ["Connection Error"];
-        callback(bodyErrMsg, connection, constants.ERR_CONSTANTS.db_connection_err);
-      }
-		}
-	],
-		function(err, connection, code, result) {
-			var body;
-
-			if (err)
-			{
-				body = {"errors": err};
-        logger.info(err, code);
-        var result = JSON.stringify(body);
-        res.setHeader('content-type', 'text/plain');
-        res.status(200).send(result);
-			}
-			else
-			{
-        body = result;
-        var result = JSON.stringify(body);
-        res.setHeader('content-type', 'text/plain');
-        res.status(200).send(result);
-			}
-		}
-	);
+    var body = retTx;
+    res = commonf.buildResponse(null, constants.ERR_CONSTANTS.success, body, res);
+  }
+  catch(err) {
+    var bodyErrMsg = ["Connection Error"];
+    res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_not_found_err, null, res);
+  }
 }
 
-function getTransactions(offset, limit, res) {
-	async.waterfall([
-		function getTxsFromParams(callback) {
-      var sqlTxs = "SELECT transactions.* FROM transactions ORDER BY block_number DESC LIMIT ?";
+async function getTransactions(offset, limit, res) {
+  var sqlTxs = "SELECT transactions.* FROM transactions ORDER BY block_number DESC LIMIT ?";
 
-      if (offset == -2 && limit == -2) {
-        var bodyErrMsg = ["Page is not a valid integer", "Offset parameter and limit parameter are not a valid integer"];
-        callback(bodyErrMsg, syncConnection, constants.ERR_CONSTANTS.db_not_found_err);
-        return;
+  if (offset == -2 && limit == -2) {
+    var bodyErrMsg = ["Page is not a valid integer", "Offset parameter and limit parameter are not a valid integer"];
+    res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_not_found_err, null, res);
+    return;
+  }
+  if (offset == -2) {
+    var bodyErrMsg = ["Page is not a valid integer", "Offset parameter is not a valid integer"];
+    res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_not_found_err, null, res);
+    return;
+  }
+  if (limit == -2) {
+    var bodyErrMsg = ["Page is not a valid integer", "Limit parameter is not a valid integer"];
+    res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_not_found_err, null, res);
+    return;
+  }
+
+  if (offset == -1) {
+    try {
+      var txsResult = (await mysqlPool.query(sqlTxs, [limit]))[0];
+      var retTxs = [];
+
+      if (txsResult == null) {
+        throw new Error();
       }
-      if (offset == -2) {
-        var bodyErrMsg = ["Page is not a valid integer", "Offset parameter is not a valid integer"];
-        callback(bodyErrMsg, syncConnection, constants.ERR_CONSTANTS.db_not_found_err);
-        return;
-      }
-      if (limit == -2) {
-        var bodyErrMsg = ["Page is not a valid integer", "Limit parameter is not a valid integer"];
-        callback(bodyErrMsg, syncConnection, constants.ERR_CONSTANTS.db_not_found_err);
-        return;
-      }
 
-      if (offset == -1) {
-        try {
-          var txsResult = syncConnection.query(sqlTxs, [limit]);
-          var retTxs = [];
+      txsResult.forEach(tx => {
+        retTxs.push(commonf.getFormatedTx(tx));
+      });
 
-          if (txsResult == null) {
-            var bodyErrMsg = ["Connection Error"];
-            callback(bodyErrMsg, syncConnection, constants.ERR_CONSTANTS.db_connection_err);
-          }
+      var body = {total: 100, txs: retTxs};
+      res = commonf.buildResponse(null, constants.ERR_CONSTANTS.success, body, res);
+    }
+    catch(err) {
+      var bodyErrMsg = ["Connection Error"];
+      res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_not_found_err, null, res);
+    }
+  } else {
+    try {
+      var txsResult = (await mysqlPool.query(sqlTxs, [limit]))[0];
+      var retTxs = [];
 
-          txsResult.forEach(tx => {
-            retTxs.push(commonf.getFormatedTx(tx));
-          });
+      txsResult.forEach(tx => {
+        retTxs.push(commonf.getFormatedTx(tx));
+      });
 
-          var body = {total: 100, txs: retTxs};
-          callback(null, syncConnection, constants.ERR_CONSTANTS.success, body);
-        }
-        catch(err) {
-          var bodyErrMsg = ["Connection Error"];
-          callback(bodyErrMsg, syncConnection, constants.ERR_CONSTANTS.db_connection_err);
-        }
-      } else {
-        try {
-          var txsResult = syncConnection.query(sqlTxs, [limit]);
-          var retTxs = [];
-
-          txsResult.forEach(tx => {
-            retTxs.push(commonf.getFormatedTx(tx));
-          });
-
-          var body = {total: 100, txs: retTxs};
-          callback(null, syncConnection, constants.ERR_CONSTANTS.success, retBlocks);
-        }
-        catch(err) {
-          var bodyErrMsg = ["Connection Error"];
-          callback(bodyErrMsg, syncConnection, constants.ERR_CONSTANTS.db_connection_err);
-        }
-      }
-		},
-	],
-		function(err, connection, code, result) {
-			var body;
-
-			if (err)
-			{
-				body = {"errors": err};
-        logger.info(err, code);
-        var result = JSON.stringify(body);
-        res.setHeader('content-type', 'text/plain');
-        res.status(200).send(result);
-			}
-			else
-			{
-        body = result;
-        var result = JSON.stringify(body);
-        res.setHeader('content-type', 'text/plain');
-        res.status(200).send(result);
-			}
-		}
-	);
+      var body = {total: 100, txs: retTxs};
+      res = commonf.buildResponse(null, constants.ERR_CONSTANTS.success, body, res);
+    }
+    catch(err) {
+      var bodyErrMsg = ["Connection Error"];
+      res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_not_found_err, null, res);
+    }
+  }
 }
 
 router.get('/', function(req, res, next){

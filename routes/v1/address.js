@@ -11,8 +11,8 @@ var commonf = require('../../common/commonf.js');
 var cryptof = require('../../common/cryptof.js')
 var controller = require('../../controllers/ExplorerController');
 var async = require('async');
-var syncMysql = require('sync-mysql');
-var syncConnection = new syncMysql(config.database);
+// var syncMysql = require('sync-mysql');
+// var syncConnection = new syncMysql(config.database);
 var mysql = require('mysql');
 
 // log4js
@@ -28,7 +28,7 @@ const rpcServer = new Quras.rpc.RPCClient(Quras.CONST.QURAS_NETWORK.MAIN);
 
 // mysql connection
 var mysql = require('mysql');
-var pool = mysql.createPool(config.database);
+// var pool = mysql.createPool(config.database);
 var generator = require('generate-password');
 var crypto = require("crypto");
 
@@ -48,7 +48,7 @@ router.get('/balance/:addr', function(req, res, next){
         data: {}
     };
 
-    commonf.getUnspent(pool, async, addr, asset, function(err, totals){
+    commonf.getUnspent(mysqlPool, async, addr, asset, function(err, totals){
         if (err) {
             if (err == "NOTHING")
             {
@@ -90,7 +90,7 @@ router.get('/history/:addr', function(req, res, next){
         data: {}
     };
 
-    commonf.getTransactionHistory(pool, async, addr, function(err, totals){
+    commonf.getTransactionHistory(mysqlPool, async, addr, function(err, totals){
         if (err) {
             logger.error(err);
 
@@ -110,74 +110,46 @@ router.get('/history/:addr', function(req, res, next){
     });
 });
 
-function getMyAssets(address, res) {
-	async.waterfall([
-		function getConn(callback) {
-      
-      callback(null, syncConnection);
-		},
-		function getAssetsFromOffset(connection, callback) {
-      var sqlTx = "SELECT register_transaction.* FROM register_transaction WHERE admin=? ORDER BY block_number";
+async function getMyAssets(address, res) {
+  var sqlTx = "SELECT register_transaction.* FROM register_transaction WHERE admin=? ORDER BY block_number";
 
-      try {
-        var txsResult = connection.query(sqlTx, [address]);
+  try {
+    var txsResult = (await mysqlPool.query(sqlTx, [address]))[0];
 
-        var sqlIssued = "SELECT asset, amount FROM issue_transaction WHERE ";
-        var sqlWhere = '';
-        txsResult.forEach(tx => {
-          if (sqlWhere.length == 0) {
-            sqlWhere += "asset=" + mysql.escape(tx.txid) + "";
-          }
-          else {
-            sqlWhere += " OR asset=" + mysql.escape(tx.txid) + "";
-          }
-        });
-
-        sqlIssued += sqlWhere;
-
-        var txsIssued = connection.query(sqlIssued, []); 
-
-        txsResult.forEach(tx => {
-          var iAmount = 0;
-          txsIssued.forEach(issuedItem => {
-            if (issuedItem.asset == tx.txid) {
-              iAmount += issuedItem.amount;
-            }
-          });
-
-          tx.issuedAmount = iAmount;
-          tx.address_count = 0;
-          tx.transaction_count = 0;
-        });
-        var retTx = commonf.getFormatedMyAssets(txsResult);
-        callback(null, connection, constants.ERR_CONSTANTS.success, retTx);
+    var sqlIssued = "SELECT asset, amount FROM issue_transaction WHERE ";
+    var sqlWhere = '';
+    txsResult.forEach(tx => {
+      if (sqlWhere.length == 0) {
+        sqlWhere += "asset=" + mysql.escape(tx.txid) + "";
       }
-      catch(err) {
-        var bodyErrMsg = ["Connection Error"];
-        callback(bodyErrMsg, connection, constants.ERR_CONSTANTS.db_connection_err);
+      else {
+        sqlWhere += " OR asset=" + mysql.escape(tx.txid) + "";
       }
-		}
-	],
-		function(err, connection, code, result) {
-			var body;
+    });
 
-			if (err)
-			{
-				body = {"errors": err};
-        logger.info(err, code);
-        var result = JSON.stringify(body);
-        res.setHeader('content-type', 'text/plain');
-        res.status(200).send(result);
-			}
-			else
-			{
-        body = result;
-        var result = JSON.stringify(body);
-        res.setHeader('content-type', 'text/plain');
-        res.status(200).send(result);
-			}
-		}
-	);
+    sqlIssued += sqlWhere;
+
+    var txsIssued = (await mysqlPool.query(sqlIssued, []))[0]; console.log(txsResult);
+
+    txsResult.forEach(tx => {
+      var iAmount = 0;
+      txsIssued.forEach(issuedItem => {
+        if (issuedItem.asset == tx.txid) {
+          iAmount += issuedItem.amount;
+        }
+      });
+
+      tx.issuedAmount = iAmount;
+      tx.address_count = 0;
+      tx.transaction_count = 0;
+    });
+    var retTx = commonf.getFormatedMyAssets(txsResult);
+    res = commonf.buildResponse(null, constants.ERR_CONSTANTS.success, retTx, res);
+  }
+  catch(err) {
+    var bodyErrMsg = ["Connection Error"];
+    res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_connection_err, null, res);
+  }
 }
 
 router.get('/assets/:address', function(req, res, next){

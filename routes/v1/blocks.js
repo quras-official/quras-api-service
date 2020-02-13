@@ -31,168 +31,102 @@ var syncConnection = new syncMysql(config.database);
 var generator = require('generate-password');
 var crypto = require("crypto");
 
-function getBlock(height, res) {
-	async.waterfall([
-		function getConn(callback) {
-      
-      callback(null, syncConnection, height);
-      /*
-			pool.getConnection(function(err,conn) {
-				var connection = conn;
-				if (err)
-				{
-					callback(err, connection, constants.ERR_CONSTANTS.db_connection_err);
-				}
-				else
-				{
-					callback(null, connection, height);
-				}
-      });
-      */
-		},
-		function getBlockFromHeight(connection, height, callback) {
-      var sqlBlocks = "SELECT * FROM blocks WHERE block_number=?";
-      var sqlTxs = "SELECT transactions.* FROM transactions WHERE block_number=?";
-
-      if (height == -1) {
-        var bodyErrMsg = ["Page is not a valid integer", "height is not a valid integer"];
-        callback(bodyErrMsg, connection, constants.ERR_CONSTANTS.api_param_format_err);
-        return;
-      }
-      try {
-        const blockResult = connection.query(sqlBlocks, [height]);
-
-        if (blockResult.length > 0) {
-          const txsResult = connection.query(sqlTxs, [height]);
-          var transactions = [];
-          var transfers = [];
-          txsResult.forEach(tx => {
-            if (tx.type == "ContractTransaction" || tx.type == "InvocationTransaction") {
-              transfers.push(tx.txid);
-            }
-            transactions.push(commonf.getFormatedTx(tx));
-          });
+async function getBlock(height, res) {
+  try {
+    var sqlBlocks = "SELECT * FROM blocks WHERE block_number=?";
+    var sqlTxs = "SELECT transactions.* FROM transactions WHERE block_number=?";
   
-          blockResult[0].transactions = transactions;
-          blockResult[0].transfers = transfers;
-          
-          var formatedBlock = commonf.getFormatedBlock(blockResult[0]);
-          callback(null, connection, constants.ERR_CONSTANTS.success, formatedBlock);
-        }
-        else {
-          var bodyErrMsg = ["Page is not a valid integer", "height is not a valid integer"];
-          callback(bodyErrMsg, connection, constants.ERR_CONSTANTS.db_not_found_err);
-        }
-      }
-      catch (err) {
-        var bodyErrMsg = ["Connection Error"];
-        callback(err, connection, constants.ERR_CONSTANTS.db_connection_err);
-      }
-		}
-	],
-		function(err, connection, code, result) {
-			var body;
+    if (height == -1) {
+      var bodyErrMsg = ["Page is not a valid integer", "height is not a valid integer"];
+      res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_connection_err, null, res);
+      return;
+    }
+    const blockResult = (await mysqlPool.query(sqlBlocks, [height]))[0];
 
-			if (err)
-			{
-				body = {"errors": err};
-        logger.info(err, code);
-        var result = JSON.stringify(body);
-        res.setHeader('content-type', 'text/plain');
-        res.status(200).send(result);
-			}
-			else
-			{
-        body = result;
-        var result = JSON.stringify(body);
-        res.setHeader('content-type', 'text/plain');
-        res.status(200).send(result);
-			}
-		}
-	);
+    if (blockResult.length > 0) {
+      const txsResult = (await mysqlPool.query(sqlTxs, [height]))[0];
+      var transactions = [];
+      var transfers = [];
+      txsResult.forEach(tx => {
+        if (tx.type == "ContractTransaction" || tx.type == "InvocationTransaction") {
+          transfers.push(tx.txid);
+        }
+        transactions.push(commonf.getFormatedTx(tx));
+      });
+
+      blockResult[0].transactions = transactions;
+      blockResult[0].transfers = transfers;
+      
+      var formatedBlock = commonf.getFormatedBlock(blockResult[0]);
+      res = commonf.buildResponse(null, constants.ERR_CONSTANTS.success, formatedBlock, res);
+    }
+    else {
+      var bodyErrMsg = ["Page is not a valid integer", "height is not a valid integer"];
+      callback(bodyErrMsg, connection, constants.ERR_CONSTANTS.db_not_found_err);
+    }
+  } catch (err) {
+    var bodyErrMsg = ["Connection Error"];
+    res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_connection_err, null, res);
+  }
 }
 
-function getBlocks(offset, limit, res) {
-	async.waterfall([
-		function getBlocksFromParams(callback) {
-			var sqlBlocks = "SELECT * FROM blocks ORDER BY block_number DESC LIMIT ?, ?";
-      var sqlTxs = "SELECT * FROM transactions WHERE block_number=?";
-      var sqlRecentBlocks = "SELECT * FROM blocks ORDER BY block_number DESC LIMIT ?";
-      var sqlTxsFromBlocks = "SELECT * FROM transactions WHERE block_number>= ? AND block_number <= ? ORDER BY block_number";
+async function getBlocks(offset, limit, res) {
+  var sqlBlocks = "SELECT * FROM blocks ORDER BY block_number DESC LIMIT ?, ?";
+  var sqlTxs = "SELECT * FROM transactions WHERE block_number=?";
+  var sqlRecentBlocks = "SELECT * FROM blocks ORDER BY block_number DESC LIMIT ?";
+  var sqlTxsFromBlocks = "SELECT * FROM transactions WHERE block_number>= ? AND block_number <= ? ORDER BY block_number";
 
-      if (offset == -2 && limit == -2) {
-        var bodyErrMsg = ["Page is not a valid integer", "Offset parameter and limit parameter are not a valid integer"];
-        callback(bodyErrMsg, syncConnection, constants.ERR_CONSTANTS.db_not_found_err);
-        return;
-      }
-      if (offset == -2) {
-        var bodyErrMsg = ["Page is not a valid integer", "Offset parameter is not a valid integer"];
-        callback(bodyErrMsg, syncConnection, constants.ERR_CONSTANTS.db_not_found_err);
-        return;
-      }
-      if (limit == -2) {
-        var bodyErrMsg = ["Page is not a valid integer", "Limit parameter is not a valid integer"];
-        callback(bodyErrMsg, syncConnection, constants.ERR_CONSTANTS.db_not_found_err);
-        return;
-      }
+  if (offset == -2 && limit == -2) {
+    var bodyErrMsg = ["Page is not a valid integer", "Offset parameter and limit parameter are not a valid integer"];
+    res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_not_found_err, null, res);
+    return;
+  }
+  if (offset == -2) {
+    var bodyErrMsg = ["Page is not a valid integer", "Offset parameter is not a valid integer"];
+    res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_not_found_err, null, res);
+    return;
+  }
+  if (limit == -2) {
+    var bodyErrMsg = ["Page is not a valid integer", "Limit parameter is not a valid integer"];
+    res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_not_found_err, null, res);
+    return;
+  }
 
-      if (offset == -1) {
-        try {
-          var blockResult = syncConnection.query(sqlRecentBlocks, [limit]);
-          var retBlocks = [];
-          blockResult.forEach(block => {
-            var formatedBlock = commonf.getFormatedBlockWithoutTransactions(block);
-            retBlocks.push(formatedBlock);
-          });
-  
-          var retBody = {total: blockResult[0].block_number, blocks: retBlocks};
-          callback(null, syncConnection, constants.ERR_CONSTANTS.success, retBody);
-        }
-        catch(err) {
-          var bodyErrMsg = ["Connection Error"];
-          callback(bodyErrMsg, syncConnection, constants.ERR_CONSTANTS.db_connection_err);
-        }
-      } else {
-        try {
-          var blockResult = syncConnection.query(sqlBlocks, [offset, limit]);
-          var retBlocks = [];
+  if (offset == -1) {
+    try {
+      var blockResult = (await mysqlPool.query(sqlRecentBlocks, [limit]))[0];
+      var retBlocks = [];
+      blockResult.forEach(block => {
+        var formatedBlock = commonf.getFormatedBlockWithoutTransactions(block);
+        retBlocks.push(formatedBlock);
+      });
 
-          blockResult.forEach(block => {
-            var formatedBlock = commonf.getFormatedBlockWithoutTransactions(block);
-            retBlocks.push(formatedBlock);
-          });
-  
-          var recentBlock = syncConnection.query(sqlRecentBlocks, [1]);
-          var retBody = {total: recentBlock[0].block_number, blocks: retBlocks};
-          callback(null, syncConnection, constants.ERR_CONSTANTS.success, retBody);
-        }
-        catch(err) {
-          var bodyErrMsg = ["Connection Error"];
-          callback(bodyErrMsg, syncConnection, constants.ERR_CONSTANTS.db_connection_err);
-        }
-      }
-		}
-	],
-		function(err, connection, code, result) {
-			var body;
+      var retBody = {total: blockResult[0].block_number, blocks: retBlocks};
+      res = commonf.buildResponse(null, constants.ERR_CONSTANTS.success, retBody, res);
+    }
+    catch(err) {
+      var bodyErrMsg = ["Connection Error"];
+      res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_not_found_err, null, res);
+    }
+  } else {
+    try {
+      var blockResult = (await mysqlPool.query(sqlBlocks, [offset, limit]))[0];
+      var retBlocks = [];
 
-			if (err)
-			{
-				body = {"errors": err};
-        logger.info(err, code);
-        var result = JSON.stringify(body);
-        res.setHeader('content-type', 'text/plain');
-        res.status(200).send(result);
-			}
-			else
-			{
-        body = result;
-        var result = JSON.stringify(body);
-        res.setHeader('content-type', 'text/plain');
-        res.status(200).send(result);
-			}
-		}
-	);
+      blockResult.forEach(block => {
+        var formatedBlock = commonf.getFormatedBlockWithoutTransactions(block);
+        retBlocks.push(formatedBlock);
+      });
+
+      var recentBlock = (await mysqlPool.query(sqlRecentBlocks, [1]))[0];
+      var retBody = {total: recentBlock[0].block_number, blocks: retBlocks};
+      res = commonf.buildResponse(null, constants.ERR_CONSTANTS.success, retBody, res);
+    }
+    catch(err) {
+      var bodyErrMsg = ["Connection Error"];
+      res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_not_found_err, null, res);
+    }
+  }
 }
 
 router.get('/', function(req, res, next){

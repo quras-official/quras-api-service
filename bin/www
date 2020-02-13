@@ -4,6 +4,12 @@
  * Module dependencies.
  */
 
+var env = process.env.NODE_ENV || "development";
+const mysql = require('mysql2/promise');
+var config = require('../common/config.json')[env];
+
+global.mysqlPool = mysql.createPool(config.database);
+
 var app = require('../app');
 var debug = require('debug')('quras-blockexplorer-service:server');
 var http = require('http');

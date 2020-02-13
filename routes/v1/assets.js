@@ -32,145 +32,89 @@ var syncConnection = new syncMysql(config.database);
 var generator = require('generate-password');
 var crypto = require("crypto");
 
-function getAssets(offset, limit, res) {
-	async.waterfall([
-		function getConn(callback) {
-      
-      callback(null, syncConnection, offset, limit);
-		},
-		function getAssetsFromOffset(connection, offset, limit, callback) {
-      var sqlTx = "SELECT register_transaction.* FROM register_transaction ORDER BY block_number";
-      if (offset != -1 || limit != -1) {
-        sqlTx += " LIMIT ?, ?";
+async function getAssets(offset, limit, res) {
+  try {
+    var sqlTx = "SELECT register_transaction.* FROM register_transaction ORDER BY block_number";
+    if (offset != -1 || limit != -1) {
+      sqlTx += " LIMIT ?, ?";
+    }
+    
+    var txsResult = (await mysqlPool.query(sqlTx, [offset, limit]))[0];
+
+    var hash = [];
+    var index = 0;
+    var sqlIssued = "SELECT * FROM issue_transaction WHERE ";
+    txsResult.forEach(tx => {
+      if (index == 0) {
+        sqlIssued += "asset=" + mysql.escape(tx.txid) + "";
       }
-      
-      try {
-        var txsResult = connection.query(sqlTx, [offset, limit]);
-
-        var hash = [];
-        var index = 0;
-        var sqlIssued = "SELECT * FROM issue_transaction WHERE ";
-        txsResult.forEach(tx => {
-          if (index == 0) {
-            sqlIssued += "asset=" + mysql.escape(tx.txid) + "";
-          }
-          else {
-            sqlIssued += " OR asset=" + mysql.escape(tx.txid) + "";
-          }
-          index ++;
-        });
-
-        var txsIssued = connection.query(sqlIssued, []); 
-
-        txsResult.forEach(tx => {
-          var iAmount = 0;
-          txsIssued.forEach(issuedItem => {
-            if (issuedItem.asset == tx.txid) {
-              iAmount += issuedItem.amount;
-            }
-          });
-
-          tx.issuedAmount = iAmount;
-          tx.address_count = 0;
-          tx.transaction_count = 0;
-        });
-        var retTx = commonf.getFormatedAssets(txsResult);
-        callback(null, connection, constants.ERR_CONSTANTS.success, retTx);
+      else {
+        sqlIssued += " OR asset=" + mysql.escape(tx.txid) + "";
       }
-      catch(err) {
-        var bodyErrMsg = ["Connection Error"];
-        callback(bodyErrMsg, connection, constants.ERR_CONSTANTS.db_connection_err);
-      }
-		}
-	],
-		function(err, connection, code, result) {
-			var body;
+      index ++;
+    });
 
-			if (err)
-			{
-				body = {"errors": err};
-        logger.info(err, code);
-        var result = JSON.stringify(body);
-        res.setHeader('content-type', 'text/plain');
-        res.status(200).send(result);
-			}
-			else
-			{
-        body = result;
-        var result = JSON.stringify(body);
-        res.setHeader('content-type', 'text/plain');
-        res.status(200).send(result);
-			}
-		}
-	);
+    var txsIssued = (await mysqlPool.query(sqlIssued, []))[0]; 
+
+    txsResult.forEach(tx => {
+      var iAmount = 0;
+      txsIssued.forEach(issuedItem => {
+        if (issuedItem.asset == tx.txid) {
+          iAmount += issuedItem.amount;
+        }
+      });
+
+      tx.issuedAmount = iAmount;
+      tx.address_count = 0;
+      tx.transaction_count = 0;
+    });
+    var retTx = commonf.getFormatedAssets(txsResult);
+    res = commonf.buildResponse(null, constants.ERR_CONSTANTS.success, retTx, res);
+  } catch (err) {
+    var bodyErrMsg = ["Connection Error"];
+    res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_connection_err, null, res);
+  }
 }
 
-function getAsset(hash, offset, limit, res) {
-	async.waterfall([
-		function getConn(callback) {
-      
-      callback(null, syncConnection, hash);
-		},
-		function getAssetsFromHash(connection, hash, callback) {
-      var sqlTx = "SELECT register_transaction.* FROM register_transaction WHERE txid=?";
-      var sqlIssued = "SELECT * FROM issue_transaction WHERE asset=?";
-      var sqlHolders = "SELECT address, balance FROM holders WHERE asset=? ORDER BY balance DESC LIMIT ?, ?";
-      var sqlTotalHolders = "SELECT address FROM holders WHERE asset=?";
-      try {
-        var txsResult = connection.query(sqlTx, [hash]);
-        var txsIssued = connection.query(sqlIssued, [hash]);
-        var holdersReults = connection.query(sqlHolders, [hash, offset, limit]);
-        var totalholdersReults = connection.query(sqlTotalHolders, [hash]);
+async function getAsset(hash, offset, limit, res) {
+  try {
+    var sqlTx = "SELECT register_transaction.* FROM register_transaction WHERE txid=?";
+    var sqlIssued = "SELECT * FROM issue_transaction WHERE asset=?";
+    var sqlHolders = "SELECT address, balance FROM holders WHERE asset=? ORDER BY balance DESC LIMIT ?, ?";
+    var sqlTotalHolders = "SELECT address FROM holders WHERE asset=?";
 
-        var issuedAsset = 0;
-        var transactions = [];
-        var addresses = [];
-        var transfers = [];
-        var holders = [];
-        var totalAmount = txsResult[0].amount;
-        var totalHoldersCnt = totalholdersReults.length;
+    var txsResult = (await mysqlPool.query(sqlTx, [hash]))[0];
+    var txsIssued = (await mysqlPool.query(sqlIssued, [hash]))[0];
+    var holdersReults = (await mysqlPool.query(sqlHolders, [hash, offset, limit]))[0];
+    var totalholdersReults = (await mysqlPool.query(sqlTotalHolders, [hash]))[0];
 
-        txsIssued.forEach(txIssued => {
-          issuedAsset += txIssued.amount;
-        });
+    var issuedAsset = 0;
+    var transactions = [];
+    var addresses = [];
+    var transfers = [];
+    var holders = [];
+    var totalAmount = txsResult[0].amount;
+    var totalHoldersCnt = totalholdersReults.length;
 
-        holdersReults.forEach(holderResult => {
-          holders.push({
-            address : holderResult.address,
-            balance : holderResult.balance,
-            percentage : (holderResult.balance  * 100) / totalAmount
-          });
-        });
+    txsIssued.forEach(txIssued => {
+      issuedAsset += txIssued.amount;
+    });
 
-        var retTx = commonf.getFormatedAsset(txsResult[0], issuedAsset, addresses, transactions, transfers, holders, totalHoldersCnt);
-        callback(null, connection, constants.ERR_CONSTANTS.success, retTx);
-      }
-      catch(err) {
-        var bodyErrMsg = ["Connection Error"];
-        callback(bodyErrMsg, connection, constants.ERR_CONSTANTS.db_connection_err);
-      }
-		}
-	],
-		function(err, connection, code, result) {
-			var body;
+    holdersReults.forEach(holderResult => {
+      holders.push({
+        address : holderResult.address,
+        balance : holderResult.balance,
+        percentage : (holderResult.balance  * 100) / totalAmount
+      });
+    });
 
-			if (err)
-			{
-				body = {"errors": err};
-        logger.info(err, code);
-        var result = JSON.stringify(body);
-        res.setHeader('content-type', 'text/plain');
-        res.status(200).send(result);
-			}
-			else
-			{
-        body = result;
-        var result = JSON.stringify(body);
-        res.setHeader('content-type', 'text/plain');
-        res.status(200).send(result);
-			}
-		}
-	);
+    var retTx = commonf.getFormatedAsset(txsResult[0], issuedAsset, addresses, transactions, transfers, holders, totalHoldersCnt);
+    res = commonf.buildResponse(null, constants.ERR_CONSTANTS.success, retTx, res);
+  }
+  catch(err) {
+    var bodyErrMsg = ["Connection Error"];
+    res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_connection_err, null, res);
+  }
 }
 
 router.get('/:offset/:limit', function(req, res, next){

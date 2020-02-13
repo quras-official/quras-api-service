@@ -31,48 +31,20 @@ var syncConnection = new syncMysql(config.database);
 var generator = require('generate-password');
 var crypto = require("crypto");
 
-function getStatus(res) {
-	async.waterfall([
-		function getConn(callback) {
-      
-      callback(null, syncConnection);
-		},
-		function getTxFromTxid(connection, callback) {
-      try{
-        var sqlStatus = "SELECT * FROM status";
+async function getStatus(res) {
+  try{
+    var sqlStatus = "SELECT * FROM status";
 
-        var statusResult = connection.query(sqlStatus, []);
+    var statusResult = (await mysqlPool.query(sqlStatus, []))[0];
 
-        var retStatus = commonf.getFormatedStatus(statusResult[0]);
+    var retStatus = commonf.getFormatedStatus(statusResult[0]);
 
-        callback(null, connection, constants.ERR_CONSTANTS.success, retStatus);
-      }
-      catch(err) {
-        var bodyErrMsg = ["unexpected request"];
-        callback(bodyErrMsg, connection, constants.ERR_CONSTANTS.db_connection_err);
-      }
-		}
-	],
-		function(err, connection, code, result) {
-			var body;
-
-			if (err)
-			{
-				body = {"errors": err};
-        logger.info(err, code);
-        var result = JSON.stringify(body);
-        res.setHeader('content-type', 'text/plain');
-        res.status(200).send(result);
-			}
-			else
-			{
-        body = result;
-        var result = JSON.stringify(body);
-        res.setHeader('content-type', 'text/plain');
-        res.status(200).send(result);
-			}
-		}
-	);
+    res = commonf.buildResponse(null, constants.ERR_CONSTANTS.success, retStatus, res);
+  }
+  catch(err) {
+    var bodyErrMsg = ["unexpected request"];
+    res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_not_found_err, null, res);
+  }
 }
 
 router.get('/', function(req, res, next){

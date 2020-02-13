@@ -60,59 +60,32 @@ router.get('/rpc', function(req, res, next){
     });
 });
 
-function getNodes(offset, limit, res) {
-	async.waterfall([
-		function getConn(callback) {
-            callback(null, syncConnection, offset, limit);
-		},
-		function getTxFromTxid(connection, offset, limit, callback) {
-            try{
-                if (offset == -2) {
-                    var sqlNodes = "SELECT * FROM nodes";
+async function getNodes(offset, limit, res) {
+    try{
+        if (offset == -2) {
+            var sqlNodes = "SELECT * FROM nodes";
 
-                    var nodesResult = connection.query(sqlNodes, []);
-    
-                    var retNodes = commonf.getFormatedNodes(nodesResult);
-                    callback(null, connection, constants.ERR_CONSTANTS.success, retNodes);
-                }
-                else if (offset == -1) {
-                    var bodyErrMsg = ["unexpected request"];
-                    callback(bodyErrMsg, connection, constants.ERR_CONSTANTS.db_connection_err);
-                } else {
-                    var sqlNodes = "SELECT * FROM nodes WHERE id >= ? ORDER BY id LIMIT ?";
+            var nodesResult = (await mysqlPool.query(sqlNodes, []))[0];
 
-                    var nodesResult = connection.query(sqlNodes, [offset, limit]);
-    
-                    var retNodes = commonf.getFormatedNodes(nodesResult);
-                    callback(null, connection, constants.ERR_CONSTANTS.success, retNodes);
-                }
-            }
-            catch(err) {
-                var bodyErrMsg = ["unexpected request"];
-                callback(bodyErrMsg, connection, constants.ERR_CONSTANTS.db_connection_err);
-            }
-		}
-	],
-		function(err, connection, code, result) {
-			var body;
+            var retNodes = commonf.getFormatedNodes(nodesResult);
+            res = commonf.buildResponse(null, constants.ERR_CONSTANTS.success, retNodes, res);
+        }
+        else if (offset == -1) {
+            var bodyErrMsg = ["unexpected request"];
+            res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_not_found_err, null, res);
+        } else {
+            var sqlNodes = "SELECT * FROM nodes WHERE id >= ? ORDER BY id LIMIT ?";
 
-			if (err)
-			{
-				body = {"errors": err};
-                logger.info(err, code);
-                var result = JSON.stringify(body);
-                res.setHeader('content-type', 'text/plain');
-                res.status(200).send(result);
-                    }
-                    else
-                    {
-                body = result;
-                var result = JSON.stringify(body);
-                res.setHeader('content-type', 'text/plain');
-                res.status(200).send(result);
-			}
-		}
-	);
+            var nodesResult = (await mysqlPool.query(sqlNodes, [offset, limit]))[0];
+
+            var retNodes = commonf.getFormatedNodes(nodesResult);
+            res = commonf.buildResponse(null, constants.ERR_CONSTANTS.success, retNodes, res);
+        }
+    }
+    catch(err) {
+        var bodyErrMsg = ["Connection Error"];
+        res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_not_found_err, null, res);
+    }
 }
 
 router.get('/', function(req, res, next){
@@ -140,46 +113,18 @@ router.get('/:offset/:limit', function(req, res, next){
     getNodes(offset, limit, res);
 })
 
-function getNodeFromHash(hash, res) {
-	async.waterfall([
-		function getConn(callback) {
-            callback(null, syncConnection, hash);
-		},
-		function getTxFromTxid(connection, hash, callback) {
-            try{
-                var sqlNodes = "SELECT * FROM nodes WHERE pub_key=?";
+async function getNodeFromHash(hash, res) {
+    try{
+        var sqlNodes = "SELECT * FROM nodes WHERE pub_key=?";
 
-                var nodesResult = connection.query(sqlNodes, [hash]);
-    
-                var retNodes = commonf.getFormatedNodes(nodesResult);
-                callback(null, connection, constants.ERR_CONSTANTS.success, retNodes.nodes[0]);
-            }
-            catch(err) {
-                var bodyErrMsg = ["unexpected request"];
-                callback(bodyErrMsg, connection, constants.ERR_CONSTANTS.db_connection_err);
-            }
-		}
-	],
-		function(err, connection, code, result) {
-			var body;
+        var nodesResult = (await mysqlPool.query(sqlNodes, [hash]))[0];
 
-			if (err)
-			{
-				body = {"errors": err};
-                logger.info(err, code);
-                var result = JSON.stringify(body);
-                res.setHeader('content-type', 'text/plain');
-                res.status(200).send(result);
-                    }
-                    else
-                    {
-                body = result;
-                var result = JSON.stringify(body);
-                res.setHeader('content-type', 'text/plain');
-                res.status(200).send(result);
-			}
-		}
-	);
+        var retNodes = commonf.getFormatedNodes(nodesResult);
+        res = commonf.buildResponse(null, constants.ERR_CONSTANTS.success, retNodes.nodes[0], res);
+    } catch(err) {
+        var bodyErrMsg = ["unexpected request"];
+        res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_not_found_err, null, res);
+    }
 }
 
 router.get('/:hash', function(req, res, next){
