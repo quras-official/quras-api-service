@@ -1,6 +1,3 @@
-var BigNumber = require('bignumber.js');
-const commonf = require('../common/commonf');
-
 function hex2a(hexx) {
     var hex = hexx.toString();//force conversion
     var str = '';

@@ -6,7 +6,6 @@ var config = require('../common/config.json')[env];
 var express = require('express');
 var router = express.Router();
 var commonf = require('../common/commonf.js');
-var cryptof = require('../common/cryptof.js')
 var controller = require('../controllers/ExplorerController');
 var async = require('async');
 
@@ -19,7 +18,6 @@ var logger = log4js.getLogger('api');
 
 // Quras
 const Quras = require('quras-js');
-const rpcServer = new Quras.rpc.RPCClient(Quras.CONST.QURAS_NETWORK.MAIN);
 
 // mysql connection
 var mysql = require('mysql');

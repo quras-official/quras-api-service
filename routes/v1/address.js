@@ -8,7 +8,6 @@ var constants = require('../constants.js');
 var express = require('express');
 var router = express.Router();
 var commonf = require('../../common/commonf.js');
-var cryptof = require('../../common/cryptof.js')
 var controller = require('../../controllers/ExplorerController');
 var async = require('async');
 // var syncMysql = require('sync-mysql');

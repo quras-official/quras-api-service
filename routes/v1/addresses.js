@@ -6,11 +6,7 @@ var config = require('../../common/config.json')[env];
 var express = require('express');
 var router = express.Router();
 var commonf = require('../../common/commonf.js');
-var cryptof = require('../../common/cryptof.js')
-var controller = require('../../controllers/ExplorerController');
-var async = require('async');
 var constants = require('../constants.js');
-var promisify = require('deferred').promisify;
 var syncMysql = require('sync-mysql');
 var mysql = require('mysql');
 
@@ -19,7 +15,6 @@ var log4js = require('log4js');
 log4js.configure({
     appenders: config.log4js
 });
-var logger = log4js.getLogger('api');
 
 // QURAS
 const Quras = require('quras-js');
