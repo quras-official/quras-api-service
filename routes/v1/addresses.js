@@ -22,10 +22,6 @@ const rpcServer = new Quras.rpc.RPCClient(Quras.CONST.QURAS_NETWORK.MAIN);
 
 // mysql connection
 var mysql = require('mysql');
-var pool = mysql.createPool(config.database);
-var syncConnection = new syncMysql(config.database);
-var generator = require('generate-password');
-var crypto = require("crypto");
 
 async function getAddress(address, res) {
   var sqlUtxos = "SELECT txid, status, asset, name, value, claimed, tx_out_index, time FROM utxos WHERE address=?";

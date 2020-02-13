@@ -18,9 +18,6 @@ const rpcServer = new Quras.rpc.RPCClient(Quras.CONST.QURAS_NETWORK.MAIN);
 
 // mysql connection
 var mysql = require('mysql');
-var pool = mysql.createPool(config.database);
-var generator = require('generate-password');
-var crypto = require("crypto");
 
 // constants
 var RESPONSE_OK = 0;

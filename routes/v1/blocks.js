@@ -21,10 +21,6 @@ const rpcServer = new Quras.rpc.RPCClient(Quras.CONST.QURAS_NETWORK.MAIN);
 
 // mysql connection
 var mysql = require('mysql');
-var pool = mysql.createPool(config.database);
-var syncConnection = new syncMysql(config.database);
-var generator = require('generate-password');
-var crypto = require("crypto");
 
 async function getBlock(height, res) {
   try {
