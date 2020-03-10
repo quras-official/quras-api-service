@@ -95,16 +95,16 @@ async function getAddress(address, res) {
   }
 }
 
-async function getStorageWallets(durationDays, uploadPrice, copy, res) {
+async function getStorageWallets(endDayTimestamp, uploadPrice, res) {
   var storageResults = null;
   try {
-    if (copy == -1) {
-      var sqlStorageWallet = "SELECT address, storage_size, current_size, aurantee_amount_per_gb, pay_amount_per_gb, end_time, rate From storate_wallets";
+    if (uploadPrice == -1) {
+      var sqlStorageWallet = "SELECT address, storage_size, current_size, gurantee_amount_per_gb, pay_amount_per_gb, end_time, rate From storage_wallets";
       storageResults = (await mysqlPool.query(sqlStorageWallet, []))[0];
     } else {
-      var sqlStorageWallet = "SELECT address, storage_size, current_size, aurantee_amount_per_gb, pay_amount_per_gb, end_time, rate From storate_wallets "
-                                + "WHERE `end_time` >= NOW() + 1000 * 3600 * 24 * ? AND pay_amount_per_gb <= ? ORDER BY rate DESC LIMIT 0, ?";
-      storageResults = (await mysqlPool.query(sqlStorageWallet, [durationDays, uploadPrice, copy]))[0];
+      var sqlStorageWallet = "SELECT address, storage_size, current_size, gurantee_amount_per_gb, pay_amount_per_gb, end_time, rate From storage_wallets "
+                                + "WHERE `end_time` >= ? AND pay_amount_per_gb <= ? ORDER BY rate";
+      storageResults = (await mysqlPool.query(sqlStorageWallet, [endDayTimestamp, uploadPrice]))[0];
     }
 
     if (storageResults == null) {
@@ -119,10 +119,11 @@ async function getStorageWallets(durationDays, uploadPrice, copy, res) {
   }
 }
 
-router.get('/:address', function(req, res, next){
-  var address = req.params.address;
-  console.log("Get Tx API was called, Params => txid : " + address);
-  getAddress(address, res);
+router.get('/storagewallet/:endDayTimestamp/:uploadPrice', function(req, res, next){
+  var endDayTimestamp = req.params.endDayTimestamp;
+  var uploadPrice = req.params.uploadPrice;
+  console.log("Get Stroage Wallets API was called, Params => durationDays : " + endDayTimestamp + ", uploadPrice : " + uploadPrice);
+  getStorageWallets(endDayTimestamp, uploadPrice, res);
 });
 
 router.get('/storagewallet/', function(req, res, next){
@@ -131,12 +132,10 @@ router.get('/storagewallet/', function(req, res, next){
   getStorageWallets(-1, -1, -1, res);
 });
 
-router.get('/storagewallet/:durationDays/:uploadPrice/:copy', function(req, res, next){
-  var durationDays = req.params.durationDays;
-  var uploadPrice = req.params.uploadPrice;
-  var copy = req.params.copy;
-  console.log("Get Stroage Wallets API was called, Params => durationDays : " + durationDays + ", uploadPrice : " + uploadPrice + ", copy : " + copy);
-  getStorageWallets(durationDays, uploadPrice, copy, res);
+router.get('/:address', function(req, res, next){
+  var address = req.params.address;
+  console.log("Get Tx API was called, Params => txid : " + address);
+  getAddress(address, res);
 });
 
 module.exports = router;
