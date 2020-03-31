@@ -11,6 +11,10 @@
     },
     "node_url": "http://localhost:8989",
     "web_server_url": "ws://127.0.0.1:8000",
+    "backend": {
+      "ip": "localhost",
+      "port": 10000
+    },
     "log4js": [
       {
         "type": "dateFile",
@@ -38,6 +42,10 @@
       "queueLimit": 0
     },
     "node_url": "http://localhost:8989",
+    "backend": {
+      "ip": "localhost",
+      "port": 10000
+    },
     "log4js": [
       {
         "type": "dateFile",

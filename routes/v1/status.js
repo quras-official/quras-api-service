@@ -9,6 +9,8 @@ var commonf = require('../../common/commonf.js');
 var constants = require('../constants.js');
 var syncMysql = require('sync-mysql');
 
+const isPortReachable = require('is-port-reachable');
+
 // log4js
 var log4js = require('log4js');
 log4js.configure({
@@ -38,9 +40,31 @@ async function getStatus(res) {
   }
 }
 
+async function getBackendStatus(res) {
+  try{
+    var retStatus = {online : false};
+    if (await isPortReachable(config.backend.port, {host: config.backend.ip})) {
+      retStatus.online = true;
+    } else {
+      retStatus.online = false;
+    }
+
+    res = commonf.buildResponse(null, constants.ERR_CONSTANTS.success, retStatus, res);
+  }
+  catch(err) {
+    var bodyErrMsg = ["unexpected request"];
+    res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_not_found_err, null, res);
+  }
+}
+
 router.get('/', function(req, res, next){
   console.log("The Status API was called.");
   getStatus(res);
+});
+
+router.get('/backend', function(req, res, next){
+  console.log("The Status of Backend was called.");
+  getBackendStatus(res);
 });
 
 module.exports = router;

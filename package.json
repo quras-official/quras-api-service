@@ -27,7 +27,8 @@
     "node-constants": "0.0.2",
     "quras-js": "1.2.9",
     "sync-mysql": "^3.0.1",
-    "mysql2": "^2.1.0"
+    "mysql2": "^2.1.0",
+    "is-port-reachable": "3.0.0"
   },
   "devDependencies": {
     "gulp": "3.9.1",
