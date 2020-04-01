@@ -10,11 +10,14 @@ var constants = require('../constants.js');
 var syncMysql = require('sync-mysql');
 var mysql = require('mysql');
 
-// log4js
-var log4js = require('log4js');
-log4js.configure({
-    appenders: config.log4js
-});
+// log
+const opts = {
+  errorEventName:'info',
+      logDirectory:'./logs', // NOTE: folder must exist and be writable...
+      fileNamePattern:'api.log-<DATE>',
+      dateFormat:'YYYY-MM-DD'
+};
+const logger = require('simple-node-logger').createRollingFileLogger( opts );
 
 // QURAS
 const Quras = require('quras-js');
@@ -123,18 +126,21 @@ router.get('/storagewallet/:endDayTimestamp/:uploadPrice', function(req, res, ne
   var endDayTimestamp = req.params.endDayTimestamp;
   var uploadPrice = req.params.uploadPrice;
   console.log("Get Stroage Wallets API was called, Params => durationDays : " + endDayTimestamp + ", uploadPrice : " + uploadPrice);
+  logger.info("Get Stroage Wallets API was called, Params => durationDays : " + endDayTimestamp + ", uploadPrice : " + uploadPrice);
   getStorageWallets(endDayTimestamp, uploadPrice, res);
 });
 
 router.get('/storagewallet/', function(req, res, next){
   var address = req.params.address;
   console.log("Get All Stroage Wallets API was called => txid : " + address);
+  logger.info("Get All Stroage Wallets API was called => txid : " + address);
   getStorageWallets(-1, -1, -1, res);
 });
 
 router.get('/:address', function(req, res, next){
   var address = req.params.address;
   console.log("Get Tx API was called, Params => txid : " + address);
+  logger.info("Get Tx API was called, Params => txid : " + address);
   getAddress(address, res);
 });
 

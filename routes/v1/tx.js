@@ -6,11 +6,14 @@ var config = require('../../common/config.json')[env];
 var express = require('express');
 var router = express.Router();
 
-// log4js
-var log4js = require('log4js');
-log4js.configure({
-    appenders: config.log4js
-});
+// log
+const opts = {
+  errorEventName:'info',
+  logDirectory:'./logs', // NOTE: folder must exist and be writable...
+  fileNamePattern:'api.log-<DATE>',
+  dateFormat:'YYYY-MM-DD'
+};
+const logger = require('simple-node-logger').createRollingFileLogger( opts );
 
 // Quras
 const Quras = require('quras-js');
@@ -30,6 +33,7 @@ router.get('/send', function(req, res, next){
     var amount = req.query.amount;
 
     console.log("Send addr => " + addr + " Amount => " + amount);
+    logger.info("Send addr => " + addr + " Amount => " + amount);
 
     var response = {
       code: RESPONSE_OK,

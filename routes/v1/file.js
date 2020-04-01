@@ -8,12 +8,14 @@ var commonf = require('../../common/commonf.js');
 var constants = require('../constants.js');
 var syncMysql = require('sync-mysql');
 
-// log4js
-var log4js = require('log4js');
-log4js.configure({
-    appenders: config.log4js
-});
-var logger = log4js.getLogger('api');
+// log
+const opts = {
+  errorEventName:'info',
+  logDirectory:'./logs', // NOTE: folder must exist and be writable...
+  fileNamePattern:'api.log-<DATE>',
+  dateFormat:'YYYY-MM-DD'
+};
+const logger = require('simple-node-logger').createRollingFileLogger( opts );
 
 // QURAS
 const Quras = require('quras-js');
@@ -39,6 +41,7 @@ router.get('/all', function(req, res, next){
     var addr = req.query.addr;
 
     console.log("Get all file info => " + addr);
+    logger.info("Get all file info => " + addr);
     getfile(res);
 
 });

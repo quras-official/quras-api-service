@@ -11,11 +11,14 @@ var syncMysql = require('sync-mysql');
 
 const isPortReachable = require('is-port-reachable');
 
-// log4js
-var log4js = require('log4js');
-log4js.configure({
-    appenders: config.log4js
-});
+// log
+const opts = {
+  errorEventName:'info',
+  logDirectory:'./logs', // NOTE: folder must exist and be writable...
+  fileNamePattern:'api.log-<DATE>',
+  dateFormat:'YYYY-MM-DD'
+};
+const logger = require('simple-node-logger').createRollingFileLogger( opts );
 
 // QURAS
 const Quras = require('quras-js');
@@ -59,11 +62,13 @@ async function getBackendStatus(res) {
 
 router.get('/', function(req, res, next){
   console.log("The Status API was called.");
+  logger.info("The Status API was called.");
   getStatus(res);
 });
 
 router.get('/backend', function(req, res, next){
   console.log("The Status of Backend was called.");
+  logger.info("The Status of Backend was called.");
   getBackendStatus(res);
 });
 

@@ -9,11 +9,14 @@ var commonf = require('../../common/commonf.js');
 var constants = require('../constants.js');
 var syncMysql = require('sync-mysql');
 
-// log4js
-var log4js = require('log4js');
-log4js.configure({
-    appenders: config.log4js
-});
+// log
+const opts = {
+  errorEventName:'info',
+  logDirectory:'./logs', // NOTE: folder must exist and be writable...
+  fileNamePattern:'api.log-<DATE>',
+  dateFormat:'YYYY-MM-DD'
+};
+const logger = require('simple-node-logger').createRollingFileLogger( opts );
 
 // QURAS
 const Quras = require('quras-js');
@@ -125,6 +128,7 @@ router.get('/', function(req, res, next){
   var limit = 20;
 
   console.log("Get blocks API was called, Params => offset : " + offset + ", limit : " + limit);
+  logger.info("Get blocks API was called, Params => offset : " + offset + ", limit : " + limit);
   getBlocks(offset, limit, res);
 });
 
@@ -138,6 +142,7 @@ router.get('/:height', function(req, res, next){
   }
 
   console.log("Get blocks API was called, Params => height : " + height);
+  logger.info("Get blocks API was called, Params => height : " + height);
   getBlock(height, res);
 });
 
@@ -158,6 +163,7 @@ router.get('/:offset/:limit', function(req, res, next){
   }
 
   console.log("Get blocks API was called, Params => offset : " + offset + ", limit : " + limit);
+  logger.info("Get blocks API was called, Params => offset : " + offset + ", limit : " + limit);
   getBlocks(offset, limit, res);
 });
 

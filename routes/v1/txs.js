@@ -10,11 +10,14 @@ var constants = require('../constants.js');
 var syncMysql = require('sync-mysql');
 var mysql = require('mysql');
 
-// log4js
-var log4js = require('log4js');
-log4js.configure({
-    appenders: config.log4js
-});
+// log
+const opts = {
+  errorEventName:'info',
+  logDirectory:'./logs', // NOTE: folder must exist and be writable...
+  fileNamePattern:'api.log-<DATE>',
+  dateFormat:'YYYY-MM-DD'
+};
+const logger = require('simple-node-logger').createRollingFileLogger( opts );
 
 // QURAS
 const Quras = require('quras-js');
@@ -177,6 +180,7 @@ router.get('/', function(req, res, next){
   var limit = 20;
 
   console.log("Get Txs API was called, Params => offset : " + offset + ", limit : " + limit);
+  logger.info("Get Txs API was called, Params => offset : " + offset + ", limit : " + limit);
   getTransactions(offset, limit, res);
 });
 
@@ -188,6 +192,7 @@ router.get('/:txid', function(req, res, next){
     txid = '0x' + txid;
   }
   console.log("Get Tx API was called, Params => txid : " + txid);
+  logger.info("Get Tx API was called, Params => txid : " + txid);
   getTx(txid, res);
 });
 
@@ -208,6 +213,7 @@ router.get('/:offset/:limit', function(req, res, next){
   }
 
   console.log("Get txs API was called, Params => offset : " + offset + ", limit : " + limit);
+  logger.info("Get txs API was called, Params => offset : " + offset + ", limit : " + limit);
   getTransactions(offset, limit, res);
 });
 

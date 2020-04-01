@@ -6,6 +6,15 @@ const diffUnit = 10000000;
 const QRS = '0x52a4b58d99af84e0ca33318f3724e92c14835d97af46714a4a68a098a3843276';
 const QRG = '0x8bd1633c62cf7631490a95ec718d2ce80928cc3b9be186394086fc7ef0e35f6a';
 
+// log
+const opts = {
+    errorEventName:'info',
+        logDirectory:'./logs', // NOTE: folder must exist and be writable...
+        fileNamePattern:'api.log-<DATE>',
+        dateFormat:'YYYY-MM-DD'
+  };
+  const logger = require('simple-node-logger').createRollingFileLogger( opts );
+
 module.exports = {
     getQRS: function(){
         return QRS;
@@ -817,6 +826,8 @@ module.exports = {
             res.setHeader('content-type', 'text/plain');
             res.status(200).send(result);
         }
+
+        logger.info("Response => " + JSON.stringify(body));
 
         return res;
     }

@@ -10,11 +10,6 @@ var express = require('express');
 var router = express.Router();
 
 // log4js
-var log4js = require('log4js');
-log4js.configure({
-    appenders: config.log4js
-});
-var logger = log4js.getLogger('api');
 
 // mysql connection
 var mysql = require('mysql');
@@ -23,7 +18,6 @@ function get_version(req, type, res) {
     pool.getConnection(function(err,conn) {
         if (err)
         {
-            logger.info('connection err');
             res.setHeader('content-type', 'text/plain');
             res.send("1.0.0.0");
         }
@@ -33,7 +27,6 @@ function get_version(req, type, res) {
                 conn.release();
                 if (err)
                 {
-                    logger.info('connection err');
                     res.setHeader('content-type', 'text/plain');
                     res.send("1.0.0.0");
                 }

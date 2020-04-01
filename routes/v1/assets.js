@@ -10,11 +10,14 @@ var constants = require('../constants.js');
 var syncMysql = require('sync-mysql');
 var mysql = require('mysql');
 
-// log4js
-var log4js = require('log4js');
-log4js.configure({
-    appenders: config.log4js
-});
+// log
+const opts = {
+  errorEventName:'info',
+      logDirectory:'./logs', // NOTE: folder must exist and be writable...
+      fileNamePattern:'api.log-<DATE>',
+      dateFormat:'YYYY-MM-DD'
+};
+const logger = require('simple-node-logger').createRollingFileLogger( opts );
 
 // QURAS
 const Quras = require('quras-js');
@@ -125,6 +128,7 @@ router.get('/:offset/:limit', function(req, res, next){
   }
 
   console.log("Get Assets API was called, Params => Offset : " + offset + " Limit : ", limit);
+  logger.info("Get Assets API was called, Params => Offset : " + offset + " Limit : ", limit);
   getAssets(offset, limit, res);
 });
 
@@ -132,6 +136,7 @@ router.get('/', function(req, res, next){
   var offset = 0;
   var limit = 20;
   console.log("Get assets api was called, Params => Offset : 0, Limit : 20");
+  logger.info("Get assets api was called, Params => Offset : 0, Limit : 20");
   getAssets(offset, limit, res);
 });
 
@@ -139,6 +144,7 @@ router.get('/all', function(req, res, next){
   var offset = -1;
   var limit = -1;
   console.log("Get all assets api was called.");
+  logger.info("Get all assets api was called.");
   getAssets(offset, limit, res);
 });
 
@@ -160,6 +166,7 @@ router.get('/:hash/:offset/:limit', function(req, res, next){
   }
 
   console.log("Get assets api was called, Params => Hash : " + hash);
+  logger.info("Get assets api was called, Params => Hash : " + hash);
   getAsset(hash, offset, limit, res);
 });
 
@@ -167,6 +174,7 @@ router.get('/:hash', function(req, res, next){
   var hash = req.params.hash;
   
   console.log("Get assets api was called, Params => Hash : " + hash);
+  logger.info("Get assets api was called, Params => Hash : " + hash);
   getAsset(hash, 0, 20, res);
 });
 module.exports = router;

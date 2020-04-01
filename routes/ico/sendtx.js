@@ -11,11 +11,6 @@ var controller = require('../../controllers/ExplorerController');
 var async = require('async');
 
 // log4js
-var log4js = require('log4js');
-log4js.configure({
-    appenders: config.log4js
-});
-var logger = log4js.getLogger('api');
 
 // Quras
 const Quras = require('quras-js');
