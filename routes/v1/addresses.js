@@ -29,11 +29,21 @@ var mysql = require('mysql');
 async function getAddress(address, res) {
   var sqlUtxos = "SELECT txid, status, asset, name, value, claimed, tx_out_index, time FROM utxos WHERE address=?";
   var sqlTransaction = "SELECT txid, time as block_time, tx_type as type FROM tx_history WHERE claim_transaction_address = ? OR contract_transaction_from = ? OR contract_transaction_to = ? OR invocation_transaction_address = ? OR issue_transaction_address = ? OR issue_transaction_to = ? OR miner_transaction_address = ? OR miner_transaction_to = ? OR uploadrequest_transaction_upload_address = ? OR downloadrequest_transaction_upload_address = ? OR downloadrequest_transaction_download_address = ? OR approvedownload_transaction_approve_address = ? OR approvedownload_transaction_download_address = ? OR payfile_transaction_download_address = ? OR payfile_transaction_upload_address = ? ORDER BY time DESC";
-  
+  var sqlStorageWallet = "SELECT id From storage_wallets WHERE address = ?"
+
+  var isStorageWallet = false;
+
   try {
     var txsResult = (await mysqlPool.query(sqlUtxos, [address]))[0];
 
     var txTransaction = (await mysqlPool.query(sqlTransaction, [address, address, address, address, address, address, address, address, address, address, address, address, address, address, address]))[0];
+
+    var txStorageWallets = (await mysqlPool.query(sqlStorageWallet, [address]))[0];
+
+    txStorageWallets.forEach(storagewallet => {
+      isStorageWallet = true;
+    });
+    
 
     // Filter unclaimed tx
     var unclaims = [];
@@ -90,6 +100,8 @@ async function getAddress(address, res) {
         });
       });
     }
+
+    retTx.is_storage_wallet = isStorageWallet;
       
     res = commonf.buildResponse(null, constants.ERR_CONSTANTS.success, retTx, res);
   } catch (err) {
@@ -122,6 +134,48 @@ async function getStorageWallets(endDayTimestamp, uploadPrice, res) {
   }
 }
 
+async function getStorageWallets_be(offset, limit, res) {
+  var storageResults = null;
+  try {
+      var sqlStorageWallet = "SELECT address, storage_size, current_size, gurantee_amount_per_gb, pay_amount_per_gb, end_time, rate From storage_wallets LIMIT ?,?";
+      var sqlTotal = "SELECT id FROM storage_wallets";
+      storageResults = (await mysqlPool.query(sqlStorageWallet, [offset, limit]))[0];
+      var totalResults = (await mysqlPool.query(sqlTotal, []))[0];
+
+      var response = {};
+
+    if (storageResults == null) {
+      var bodyErrMsg = ["Connection Error"];
+      res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_connection_err, null, res);
+    } else {
+      response.wallets = storageResults;
+      response.total = totalResults.length;
+      res = commonf.buildResponse(null, constants.ERR_CONSTANTS.success, response, res);
+    }
+  } catch (err) {
+    var bodyErrMsg = ["Connection Error"];
+    res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_connection_err, null, res);
+  }
+}
+
+async function getStorageWallet(addr, res) {
+  var storageResults = null;
+  try {
+      var sqlStorageWallet = "SELECT address, storage_size, current_size, gurantee_amount_per_gb, pay_amount_per_gb, end_time, rate From storage_wallets WHERE address = ?";
+      storageResults = (await mysqlPool.query(sqlStorageWallet, [addr]))[0];
+    
+    if (storageResults == null) {
+      var bodyErrMsg = ["Connection Error"];
+      res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_connection_err, null, res);
+    } else {
+      res = commonf.buildResponse(null, constants.ERR_CONSTANTS.success, storageResults[0], res);
+    }
+  } catch (err) {
+    var bodyErrMsg = ["Connection Error"];
+    res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_connection_err, null, res);
+  }
+}
+
 router.get('/storagewallet/:endDayTimestamp/:uploadPrice', function(req, res, next){
   var endDayTimestamp = req.params.endDayTimestamp;
   var uploadPrice = req.params.uploadPrice;
@@ -130,11 +184,41 @@ router.get('/storagewallet/:endDayTimestamp/:uploadPrice', function(req, res, ne
   getStorageWallets(endDayTimestamp, uploadPrice, res);
 });
 
-router.get('/storagewallet/', function(req, res, next){
-  var address = req.params.address;
-  console.log("Get All Stroage Wallets API was called => txid : " + address);
-  logger.info("Get All Stroage Wallets API was called => txid : " + address);
-  getStorageWallets(-1, -1, -1, res);
+router.get('/storagewallet_be/:offset/:limit', function(req, res, next){
+  var offset = req.params.offset;
+  var limit = req.params.limit;
+
+  if (commonf.isNumber(offset)) {
+    offset = Number.parseInt(offset, 10);
+  } else {
+    offset = -2;
+  }
+
+  if (commonf.isNumber(limit)) {
+    limit = Number.parseInt(limit, 10);
+  } else {
+    limit = -2;
+  }
+  
+  console.log("Get All Stroage Wallets API was called, Params => offset : " + offset + ", limit : " + limit);
+  logger.info("Get All Stroage Wallets API was called, Params => offset : " + offset + ", limit : " + limit);
+  getStorageWallets_be(offset, limit, res);
+});
+
+router.get('/storagewallet_be', function(req, res, next){
+  var offset = 0;
+  var limit = 20;
+  
+  console.log("Get All Stroage Wallets API was called, Params => offset : " + offset + ", limit : " + limit);
+  logger.info("Get All Stroage Wallets API was called, Params => offset : " + offset + ", limit : " + limit);
+  getStorageWallets_be(offset, limit, res);
+});
+
+router.get('/storagewallet/:addr', function(req, res, next){
+  var address = req.params.addr;
+  console.log("Get Stroage Wallet API was called => address : " + address);
+  logger.info("Get Stroage Wallet API was called => address : " + address);
+  getStorageWallet(address, res);
 });
 
 router.get('/:address', function(req, res, next){
