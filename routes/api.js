@@ -10,11 +10,6 @@ var controller = require('../controllers/ExplorerController');
 var async = require('async');
 
 // log4js
-var log4js = require('log4js');
-log4js.configure({
-    appenders: config.log4js
-});
-var logger = log4js.getLogger('api');
 
 // Quras
 const Quras = require('quras-js');
@@ -41,7 +36,6 @@ router.get('/unspent', function(req, res, nex) {
 
     commonf.getUnspent(pool, async, addr, asset, function(err, totals){
         if (err) {
-            logger.error(err);
 
             response.code = RESPONSE_ERR;
 
@@ -69,7 +63,6 @@ router.get('/balance', function(req, res, next){
 
     commonf.getUnspent(pool, async, addr, asset, function(err, totals){
         if (err) {
-            logger.error(err);
 
             response.code = RESPONSE_ERR;
 

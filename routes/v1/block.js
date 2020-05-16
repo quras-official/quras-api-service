@@ -8,12 +8,14 @@ var router = express.Router();
 var commonf = require('../../common/commonf.js');
 var async = require('async');
 
-// log4js
-var log4js = require('log4js');
-log4js.configure({
-    appenders: config.log4js
-});
-var logger = log4js.getLogger('api');
+// log
+const opts = {
+    errorEventName:'info',
+    logDirectory:'./logs', // NOTE: folder must exist and be writable...
+    fileNamePattern:'api.log-<DATE>',
+    dateFormat:'YYYY-MM-DD'
+};
+const logger = require('simple-node-logger').createRollingFileLogger( opts );
 
 // QURAS
 const Quras = require('quras-js');
@@ -28,6 +30,7 @@ var RESPONSE_ERR = 1;
 
 router.get('/height', function(req, res, next){
     console.log("Get Block Height...");
+    logger.info("Get Block Height...");
 
     var response = {
         code: RESPONSE_OK,
@@ -37,8 +40,6 @@ router.get('/height', function(req, res, next){
 
     commonf.getCurrentBlockHeight(pool, async, function(err, block_height){
         if (err) {
-            logger.error(err);
-
             response.code = RESPONSE_ERR;
 
             return res.send(JSON.stringify(response));
@@ -49,6 +50,7 @@ router.get('/height', function(req, res, next){
             };
             res.send(JSON.stringify(response));
         }
+        logger.info("Get Block Height, Response => " + JSON.stringify(response));
     });
 });
 

@@ -14,12 +14,14 @@ var async = require('async');
 // var syncConnection = new syncMysql(config.database);
 var mysql = require('mysql');
 
-// log4js
-var log4js = require('log4js');
-log4js.configure({
-    appenders: config.log4js
-});
-var logger = log4js.getLogger('api');
+// log
+const opts = {
+  errorEventName:'info',
+      logDirectory:'./logs', // NOTE: folder must exist and be writable...
+      fileNamePattern:'api.log-<DATE>',
+      dateFormat:'YYYY-MM-DD'
+};
+const logger = require('simple-node-logger').createRollingFileLogger( opts );
 
 // Quras
 const Quras = require('quras-js');
@@ -40,6 +42,7 @@ router.get('/balance/:addr', function(req, res, next){
     var asset = undefined;
 
     console.log("GetBalance addr => " + addr);
+    logger.info("GetBalance addr => " + addr);
 
     var response = {
         code: RESPONSE_OK,
@@ -51,8 +54,6 @@ router.get('/balance/:addr', function(req, res, next){
         if (err) {
             if (err == "NOTHING")
             {
-                logger.error(err);
-
                 response.code = RESPONSE_OK;
 
                 response.data = {balance: 0};
@@ -60,8 +61,6 @@ router.get('/balance/:addr', function(req, res, next){
                 return res.send(JSON.stringify(response));
             }
             else{
-                logger.error(err);
-
                 response.code = RESPONSE_ERR;
     
                 return res.send(JSON.stringify(response));
@@ -74,6 +73,7 @@ router.get('/balance/:addr', function(req, res, next){
             };
             res.send(JSON.stringify(response));
         }
+        logger.info("GetBalance Response => " + JSON.stringify(response));
     });
 });
 
@@ -81,7 +81,8 @@ router.get('/history/:addr', function(req, res, next){
     var addr = req.params.addr;
     var asset = undefined;
 
-    console.log("GetBalance addr => " + addr);
+    console.log("GetHistory addr => " + addr);
+    logger.info("GetHistory addr => " + addr);
 
     var response = {
         code: RESPONSE_OK,
@@ -91,8 +92,6 @@ router.get('/history/:addr', function(req, res, next){
 
     commonf.getTransactionHistory(mysqlPool, async, addr, function(err, totals){
         if (err) {
-            logger.error(err);
-
             response.code = RESPONSE_ERR;
 
             return res.send(JSON.stringify(response));
@@ -106,6 +105,7 @@ router.get('/history/:addr', function(req, res, next){
             };
             res.send(JSON.stringify(response));
         }
+        logger.info("GetHistory Response => " + JSON.stringify(response));
     });
 });
 
@@ -156,6 +156,7 @@ router.get('/assets/:address', function(req, res, next){
     var address = req.params.address;
   
     console.log("Get my assets api was called.");
+    logger.info("Get my assets api was called.");
     getMyAssets(address, res);
 });
 module.exports = router;

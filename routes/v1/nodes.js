@@ -10,12 +10,14 @@ var async = require('async');
 var syncMysql = require('sync-mysql');
 var constants = require('../constants.js');
 
-// log4js
-var log4js = require('log4js');
-log4js.configure({
-    appenders: config.log4js
-});
-var logger = log4js.getLogger('api');
+// log
+const opts = {
+    errorEventName:'info',
+    logDirectory:'./logs', // NOTE: folder must exist and be writable...
+    fileNamePattern:'api.log-<DATE>',
+    dateFormat:'YYYY-MM-DD'
+  };
+  const logger = require('simple-node-logger').createRollingFileLogger( opts );
 
 // Quras
 const Quras = require('quras-js');
@@ -31,6 +33,7 @@ var RESPONSE_ERR = 1;
 
 router.get('/rpc', function(req, res, next){
     console.log("Get All RPC Nodes...");
+    logger.info("Get All RPC Nodes...");
 
     var response = {
         code: RESPONSE_OK,
@@ -40,8 +43,6 @@ router.get('/rpc', function(req, res, next){
 
     commonf.getRpcNodesInfo(pool, async, function(err, nodes){
         if (err) {
-            logger.error(err);
-
             response.code = RESPONSE_ERR;
 
             return res.send(JSON.stringify(response));
@@ -52,6 +53,7 @@ router.get('/rpc', function(req, res, next){
             };
             res.send(JSON.stringify(response));
         }
+        logger.info("Get All RPC Nodes, Response => " + JSON.stringify(response));
     });
 });
 
@@ -85,6 +87,7 @@ async function getNodes(offset, limit, res) {
 
 router.get('/', function(req, res, next){
     console.log("The Get Nodes API was called.");
+    logger.info("The Get Nodes API was called.");
     getNodes(-2, -2, res);
 });
 
@@ -105,6 +108,7 @@ router.get('/:offset/:limit', function(req, res, next){
     }
 
     console.log("The Get Nodes API was called, Params => offset : " + offset + ", limit : " + limit);
+    logger.info("The Get Nodes API was called, Params => offset : " + offset + ", limit : " + limit);
     getNodes(offset, limit, res);
 })
 
@@ -126,6 +130,7 @@ router.get('/:hash', function(req, res, next){
     var hash = req.params.hash;
 
     console.log("The Get Nodes API was called. Params => Hash : " + hash);
+    logger.info("The Get Nodes API was called. Params => Hash : " + hash);
     getNodeFromHash(hash, res);
 });
 

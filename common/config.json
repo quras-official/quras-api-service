@@ -1,9 +1,9 @@
 {
   "development" : {
     "database": {
-      "host": "localhost",
-      "user": "root",
-      "password": "",
+      "host": "qurasdb.cknlhm7zat2u.ap-northeast-1.rds.amazonaws.com",
+      "user": "admin",
+      "password": "5eWuTZwz",
       "database": "quras_db",
       "waitForConnections": true,
       "connectionLimit": 10,
@@ -11,6 +11,10 @@
     },
     "node_url": "http://localhost:8989",
     "web_server_url": "ws://127.0.0.1:8000",
+    "backend": {
+      "ip": "localhost",
+      "port": 10000
+    },
     "log4js": [
       {
         "type": "dateFile",
@@ -29,15 +33,19 @@
 
   "production" : {
     "database": {
-      "host": "localhost",
-      "user": "root",
-      "password": "",
+      "host": "qurasdb.cknlhm7zat2u.ap-northeast-1.rds.amazonaws.com",
+      "user": "admin",
+      "password": "5eWuTZwz",
       "database": "quras_db",
       "waitForConnections": true,
       "connectionLimit": 10,
       "queueLimit": 0
     },
     "node_url": "http://localhost:8989",
+    "backend": {
+      "ip": "localhost",
+      "port": 10000
+    },
     "log4js": [
       {
         "type": "dateFile",
