@@ -22,10 +22,10 @@ module.exports = {
     getQRG: function(){
         return QRG;
     },
-    getTransactionHistory: async function(pool, async, addr, _callback) {
+    getTransactionHistory: async function(pool, async, addr, from, count, _callback) {
         var likeAddr = '%' + addr + '%';
-        var sql = "SELECT * from tx_history WHERE claim_transaction_address = ? OR contract_transaction_from = ? OR contract_transaction_to = ? OR invocation_transaction_address = ? OR issue_transaction_address = ? OR issue_transaction_to = ? OR miner_transaction_address = ? OR miner_transaction_to = ? OR uploadrequest_transaction_upload_address = ? OR downloadrequest_transaction_upload_address = ? OR downloadrequest_transaction_download_address = ? OR approvedownload_transaction_approve_address = ? OR approvedownload_transaction_download_address = ? OR payfile_transaction_download_address = ? OR payfile_transaction_upload_address = ? ORDER BY time DESC LIMIT 0, 30";
-        var rows = (await pool.query(sql, [addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr]))[0];
+        var sql = "SELECT * from tx_history WHERE claim_transaction_address = ? OR contract_transaction_from = ? OR contract_transaction_to = ? OR invocation_transaction_address = ? OR issue_transaction_address = ? OR issue_transaction_to = ? OR miner_transaction_address = ? OR miner_transaction_to = ? OR uploadrequest_transaction_upload_address = ? OR downloadrequest_transaction_upload_address = ? OR downloadrequest_transaction_download_address = ? OR approvedownload_transaction_approve_address = ? OR approvedownload_transaction_download_address = ? OR payfile_transaction_download_address = ? OR payfile_transaction_upload_address = ? ORDER BY time DESC LIMIT ?, ?";
+        var rows = (await pool.query(sql, [addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, from, count]))[0];
         if (rows.length < 0) {
             _callback("ERROR", []);
         } else if (rows.length == 0) {
