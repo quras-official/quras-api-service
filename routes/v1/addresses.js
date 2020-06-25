@@ -122,6 +122,13 @@ async function getStorageWallets(endDayTimestamp, uploadPrice, res) {
       storageResults = (await mysqlPool.query(sqlStorageWallet, [endDayTimestamp, uploadPrice]))[0];
     }
 
+    for(var i = 0; i < storageResults.length; i ++) {
+      var sqlStateTransaction = "SELECT block_number FROM state_transaction WHERE state_script LIKE '0000' AND from_address LIKE ?";
+      var scriptHash = Quras.wallet.getScriptHashFromAddress(storageResults[i]["address"]);
+      stateResult = (await mysqlPool.query(sqlStateTransaction, ["0x" + scriptHash]))[0];
+      storageResults[i]['file_count'] = stateResult.length;
+    }
+
     if (storageResults == null) {
       var bodyErrMsg = ["Connection Error"];
       res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_connection_err, null, res);
@@ -137,8 +144,8 @@ async function getStorageWallets(endDayTimestamp, uploadPrice, res) {
 async function getStorageWallets_be(offset, limit, res) {
   var storageResults = null;
   try {
-      var sqlStorageWallet = "SELECT address, storage_size, current_size, gurantee_amount_per_gb, pay_amount_per_gb, end_time, rate From storage_wallets LIMIT ?,?";
-      var sqlTotal = "SELECT id FROM storage_wallets";
+      var sqlStorageWallet = "SELECT address, storage_size, current_size, gurantee_amount_per_gb, pay_amount_per_gb, end_time, rate From storage_wallets WHERE end_time > NOW() LIMIT ?,?";
+      var sqlTotal = "SELECT id FROM storage_wallets WHERE end_time > NOW()";
       storageResults = (await mysqlPool.query(sqlStorageWallet, [offset, limit]))[0];
       var totalResults = (await mysqlPool.query(sqlTotal, []))[0];
 
@@ -161,9 +168,34 @@ async function getStorageWallets_be(offset, limit, res) {
 async function getStorageWallet(addr, res) {
   var storageResults = null;
   try {
-      var sqlStorageWallet = "SELECT address, storage_size, current_size, gurantee_amount_per_gb, pay_amount_per_gb, end_time, rate From storage_wallets WHERE address = ?";
-      storageResults = (await mysqlPool.query(sqlStorageWallet, [addr]))[0];
-    
+    var sqlStorageWallet = "SELECT address, storage_size, current_size, gurantee_amount_per_gb, pay_amount_per_gb, end_time, rate From storage_wallets WHERE address = ?";
+    storageResults = (await mysqlPool.query(sqlStorageWallet, [addr]))[0];
+
+    for(var i = 0; i < storageResults.length; i ++) {
+      var sqlStateTransaction = "SELECT block_number FROM state_transaction WHERE state_script LIKE '0000' AND from_address LIKE ?";
+      var scriptHash = Quras.wallet.getScriptHashFromAddress(storageResults[i]["address"]);
+      stateResult = (await mysqlPool.query(sqlStateTransaction, ["0x" + scriptHash]))[0];
+      storageResults[i]['file_count'] = stateResult.length;
+    }
+
+    if (storageResults == null) {
+      var bodyErrMsg = ["Connection Error"];
+      res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_connection_err, null, res);
+    } else {
+      res = commonf.buildResponse(null, constants.ERR_CONSTANTS.success, storageResults[0], res);
+    }
+  } catch (err) {
+    var bodyErrMsg = ["Connection Error"];
+    res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_connection_err, null, res);
+  }
+}
+
+async function getStorageFailure(addr, res) {
+  var storageResults = null;
+  try {
+    var sqlStorageWallet = "SELECT amount, utxid, uploadsize From pay_upload_transaction WHERE to_address = ?";
+    storageResults = (await mysqlPool.query(sqlStorageWallet, [addr]))[0];
+
     if (storageResults == null) {
       var bodyErrMsg = ["Connection Error"];
       res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_connection_err, null, res);
@@ -212,6 +244,13 @@ router.get('/storagewallet_be', function(req, res, next){
   console.log("Get All Stroage Wallets API was called, Params => offset : " + offset + ", limit : " + limit);
   logger.info("Get All Stroage Wallets API was called, Params => offset : " + offset + ", limit : " + limit);
   getStorageWallets_be(offset, limit, res);
+});
+
+router.get('/storagewallet/uploads/failure/payupload/:address', function(req, res, next){
+  var address = req.params.address;
+  console.log("Get Storage Failure List from uploads => address : " + address);
+  logger.info("Get Storage Failure List from uploads => address : " + address);
+  getStorageFailure(address, res);
 });
 
 router.get('/storagewallet/:addr', function(req, res, next){
