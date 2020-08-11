@@ -77,24 +77,52 @@ router.get('/balance/:addr', function(req, res, next){
     });
 });
 
-router.get('/history/:addr', function(req, res, next){
-    var addr = req.params.addr;
-    var asset = undefined;
+async function getTxHistory(addr, from, count, res) {
+  var response = {
+      code: RESPONSE_OK,
+      msg: '',
+      data: {}
+  };
 
-    console.log("GetHistory addr => " + addr);
-    logger.info("GetHistory addr => " + addr);
+  var scriptHash = Quras.wallet.getScriptHashFromAddress(addr);
+  rpcServer.getMemPoolTransaction(scriptHash)
+  .then((data) => {
+    if (data.length > from) {
+      if (data.length >= from + count) {
+        var balance_data = data.slice(from, from + count);
 
-    var response = {
-        code: RESPONSE_OK,
-        msg: '',
-        data: {}
-    };
+        console.log(balance_data);
 
-    commonf.getTransactionHistory(mysqlPool, async, addr, function(err, totals){
-        if (err) {
+        response.data = {
+            history : balance_data
+        };
+        res.send(JSON.stringify(response));
+      } else {
+        var balance_data = data.slice(from, data.length);
+
+        commonf.getTransactionHistory(mysqlPool, async, addr, 0, from + count - data.length, function(err, totals){
+          if (err) {
             response.code = RESPONSE_ERR;
-
+  
             return res.send(JSON.stringify(response));
+          } else {
+            balance_data = balance_data.concat(totals);
+
+            console.log(balance_data);
+
+            response.data = {
+                history : balance_data
+            };
+            res.send(JSON.stringify(response));
+          }
+        });
+      }
+    } else {
+      commonf.getTransactionHistory(mysqlPool, async, addr, from - data.length, count,  function(err, totals){
+        if (err) {
+          response.code = RESPONSE_ERR;
+
+          return res.send(JSON.stringify(response));
         } else {
             var balance_data = totals;
 
@@ -105,8 +133,24 @@ router.get('/history/:addr', function(req, res, next){
             };
             res.send(JSON.stringify(response));
         }
-        logger.info("GetHistory Response => " + JSON.stringify(response));
-    });
+      });
+    }
+  })
+  .catch ((error) => {
+    response.code = RESPONSE_ERR;
+
+    return res.send(JSON.stringify(response));
+  });
+}
+
+router.get('/history/:addr', function(req, res, next){
+    var addr = req.params.addr;
+    var asset = undefined;
+
+    console.log("GetHistory addr => " + addr);
+    logger.info("GetHistory addr => " + addr);
+
+    getTxHistory(addr, 0, 30, res);
 });
 
 async function getMyAssets(address, res) {
