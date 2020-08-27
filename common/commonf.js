@@ -3,8 +3,8 @@ const defMaxTxs = 20;
 const defMaxAccounts = 20;
 const diffUnit = 10000000;
 
-const QRS = '0x52a4b58d99af84e0ca33318f3724e92c14835d97af46714a4a68a098a3843276';
-const QRG = '0x8bd1633c62cf7631490a95ec718d2ce80928cc3b9be186394086fc7ef0e35f6a';
+const XQC = '0x52a4b58d99af84e0ca33318f3724e92c14835d97af46714a4a68a098a3843276';
+const XQG = '0x8bd1633c62cf7631490a95ec718d2ce80928cc3b9be186394086fc7ef0e35f6a';
 
 // log
 const opts = {
@@ -16,11 +16,11 @@ const opts = {
   const logger = require('simple-node-logger').createRollingFileLogger( opts );
 
 module.exports = {
-    getQRS: function(){
-        return QRS;
+    getXQC: function(){
+        return XQC;
     },
-    getQRG: function(){
-        return QRG;
+    getXQG: function(){
+        return XQG;
     },
     getTransactionHistory: async function(pool, async, addr, from, count, _callback) {
         var likeAddr = '%' + addr + '%';

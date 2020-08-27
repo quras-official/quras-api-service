@@ -49,14 +49,14 @@ async function getAddress(address, res) {
     var unclaims = [];
     var unavailable_claims = [];
     txsResult.forEach(tx => {
-      if (tx.claimed != 1 && tx.asset == "0x" + Quras.CONST.ASSET_ID.QRS && tx.txid != null && tx.status == "spent") {
+      if (tx.claimed != 1 && tx.asset == "0x" + Quras.CONST.ASSET_ID.XQC && tx.txid != null && tx.status == "spent") {
         var unclaim = {
           txid : tx.txid,
           vout : tx.tx_out_index
         }
         unclaims.push(unclaim)
       }
-      else if (tx.claimed != 1 && tx.asset == "0x" + Quras.CONST.ASSET_ID.QRS && tx.txid != null && tx.status == "unspent") {
+      else if (tx.claimed != 1 && tx.asset == "0x" + Quras.CONST.ASSET_ID.XQC && tx.txid != null && tx.status == "unspent") {
         var unclaim = {
           txid : tx.txid,
           vout : tx.tx_out_index,

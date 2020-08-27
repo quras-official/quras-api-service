@@ -7,12 +7,14 @@
 var env = process.env.NODE_ENV || "development";
 const mysql = require('mysql2/promise');
 var config = require('../common/config.json')[env];
+const fs = require('fs');
 
 global.mysqlPool = mysql.createPool(config.database);
 
 var app = require('../app');
 var debug = require('debug')('quras-blockexplorer-service:server');
 var http = require('http');
+const https = require('https');
 
 /**
  * Get port from environment and store in Express.
@@ -25,7 +27,15 @@ app.set('port', port);
  * Create HTTP server.
  */
 
-var server = http.createServer(app);
+
+
+const options = {
+  key: fs.readFileSync('/ssl/blockapi_quras_io.key'),
+  cert: fs.readFileSync('/ssl/blockapi_quras_io.pem')
+};
+
+//var server = http.createServer(app);
+var server = https.createServer(options, app);
 
 /**
  * Listen on provided port, on all network interfaces.
