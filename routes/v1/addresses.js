@@ -27,8 +27,9 @@ const rpcServer = new Quras.rpc.RPCClient(Quras.CONST.QURAS_NETWORK.MAIN);
 var mysql = require('mysql');
 
 async function getAddress(address, res) {
+  var likeAddr = '%' + address + '%';
   var sqlUtxos = "SELECT txid, status, asset, name, value, claimed, tx_out_index, time FROM utxos WHERE address=?";
-  var sqlTransaction = "SELECT txid, time as block_time, tx_type as type FROM tx_history WHERE claim_transaction_address = ? OR contract_transaction_from = ? OR contract_transaction_to = ? OR invocation_transaction_address = ? OR issue_transaction_address = ? OR issue_transaction_to = ? OR miner_transaction_address = ? OR miner_transaction_to = ? OR uploadrequest_transaction_upload_address = ? OR downloadrequest_transaction_upload_address = ? OR downloadrequest_transaction_download_address = ? OR approvedownload_transaction_approve_address = ? OR approvedownload_transaction_download_address = ? OR payfile_transaction_download_address = ? OR payfile_transaction_upload_address = ? ORDER BY time DESC";
+  var sqlTransaction = "SELECT txid, time as block_time, tx_type as type FROM tx_history WHERE claim_transaction_address = ? OR contract_transaction_from = ? OR contract_transaction_to = ? OR invocation_transaction_address = ? OR issue_transaction_address = ? OR issue_transaction_to = ? OR miner_transaction_address = ? OR miner_transaction_to = ? OR uploadrequest_transaction_upload_address = ? OR downloadrequest_transaction_upload_address = ? OR downloadrequest_transaction_download_address = ? OR approvedownload_transaction_approve_address = ? OR approvedownload_transaction_download_address = ? OR payfile_transaction_download_address = ? OR payfile_transaction_upload_address = ? OR multisign_pubkeys LIKE ? ORDER BY time DESC";
   var sqlStorageWallet = "SELECT id From storage_wallets WHERE address = ?"
 
   var isStorageWallet = false;
@@ -36,7 +37,7 @@ async function getAddress(address, res) {
   try {
     var txsResult = (await mysqlPool.query(sqlUtxos, [address]))[0];
 
-    var txTransaction = (await mysqlPool.query(sqlTransaction, [address, address, address, address, address, address, address, address, address, address, address, address, address, address, address]))[0];
+    var txTransaction = (await mysqlPool.query(sqlTransaction, [address, address, address, address, address, address, address, address, address, address, address, address, address, address, address, likeAddr]))[0];
 
     var txStorageWallets = (await mysqlPool.query(sqlStorageWallet, [address]))[0];
 
@@ -68,8 +69,8 @@ async function getAddress(address, res) {
     // End filter
     var data_claim = await rpcServer.getClaimAmount(unavailable_claims);
     var data = await rpcServer.getClaimAmount(unclaims);
-    var available = {amount: data.unclaimed, asset_symbol: 'XQG', asset_hash: "0x" + Quras.CONST.ASSET_ID.QRG, references: unclaims};
-    var unavailable = {amount: data_claim.unclaimed, asset_symbol: 'XQG', asset_hash: "0x" + Quras.CONST.ASSET_ID.QRG, references: unavailable_claims};
+    var available = {amount: data.unclaimed, asset_symbol: 'XQG', asset_hash: "0x" + Quras.CONST.ASSET_ID.XQG, references: unclaims};
+    var unavailable = {amount: data_claim.unclaimed, asset_symbol: 'XQG', asset_hash: "0x" + Quras.CONST.ASSET_ID.XQG, references: unavailable_claims};
     var unclaimed = {
         available: available,
         unavailable: unavailable

@@ -195,6 +195,66 @@ async function getMyAssets(address, res) {
   }
 }
 
+async function getMultiSignAddress(address, res) {
+  var likeAddr = '%' + address + '%';
+  var sqlTx = "SELECT address FROM register_multisign_transaction WHERE pubkeys like ? ORDER BY block_number";
+  var ret = [];
+
+  try {
+    var txsResult = (await mysqlPool.query(sqlTx, [likeAddr]))[0];
+
+    txsResult.forEach(tx => {
+      ret.push(tx.address);
+    });
+
+    res = commonf.buildResponse(null, constants.ERR_CONSTANTS.success, ret, res);
+  }
+  catch(err) {
+    var bodyErrMsg = ["Connection Error"];
+    res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_connection_err, null, res);
+  }
+}
+
+async function getMultiSignMembers(address, res) {
+  var sqlTx = "SELECT pubkeys FROM register_multisign_transaction WHERE address = ? ORDER BY block_number";
+  var ret = [];
+
+  try {
+    var txsResult = (await mysqlPool.query(sqlTx, [address]))[0][0];
+
+    var jpubkeys = JSON.parse(txsResult.pubkeys);
+    jpubkeys.forEach(pubkey => {
+      ret.push(pubkey.Address);
+    });
+
+    res = commonf.buildResponse(null, constants.ERR_CONSTANTS.success, ret, res);
+  }
+  catch(err) {
+    var bodyErrMsg = ["Connection Error"];
+    res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_connection_err, null, res);
+  }
+}
+
+async function getMultiSignMemberPubkeys(address, res) {
+  var sqlTx = "SELECT pubkeys FROM register_multisign_transaction WHERE address = ? ORDER BY block_number";
+  var ret = [];
+
+  try {
+    var txsResult = (await mysqlPool.query(sqlTx, [address]))[0][0];
+
+    var jpubkeys = JSON.parse(txsResult.pubkeys);
+    jpubkeys.forEach(pubkey => {
+      ret.push(pubkey.PublicKey);
+    });
+
+    res = commonf.buildResponse(null, constants.ERR_CONSTANTS.success, ret, res);
+  }
+  catch(err) {
+    var bodyErrMsg = ["Connection Error"];
+    res = commonf.buildResponse(bodyErrMsg, constants.ERR_CONSTANTS.db_connection_err, null, res);
+  }
+}
+
 router.get('/assets/:address', function(req, res, next){
 
     var address = req.params.address;
@@ -202,5 +262,32 @@ router.get('/assets/:address', function(req, res, next){
     console.log("Get my assets api was called.");
     logger.info("Get my assets api was called.");
     getMyAssets(address, res);
+});
+
+router.get('/multi/:address', function(req, res, next){
+
+  var address = req.params.address;
+
+  console.log("Get my multi sign addresses api was called.");
+  logger.info("Get my multi sign addresses api was called.");
+  getMultiSignAddress(address, res);
+});
+
+router.get('/multi/members/:address', function(req, res, next){
+
+  var address = req.params.address;
+
+  console.log("Get my multi sign members api was called.");
+  logger.info("Get my multi sign members api was called.");
+  getMultiSignMembers(address, res);
+});
+
+router.get('/multi/member_pubkeys/:address', function(req, res, next){
+
+  var address = req.params.address;
+
+  console.log("Get my multi sign members pubkeys api was called.");
+  logger.info("Get my multi sign members pubkeys api was called.");
+  getMultiSignMemberPubkeys(address, res);
 });
 module.exports = router;

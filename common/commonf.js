@@ -24,8 +24,8 @@ module.exports = {
     },
     getTransactionHistory: async function(pool, async, addr, from, count, _callback) {
         var likeAddr = '%' + addr + '%';
-        var sql = "SELECT * from tx_history WHERE claim_transaction_address = ? OR contract_transaction_from = ? OR contract_transaction_to = ? OR invocation_transaction_address = ? OR issue_transaction_address = ? OR issue_transaction_to = ? OR miner_transaction_address = ? OR miner_transaction_to = ? OR uploadrequest_transaction_upload_address = ? OR downloadrequest_transaction_upload_address = ? OR downloadrequest_transaction_download_address = ? OR approvedownload_transaction_approve_address = ? OR approvedownload_transaction_download_address = ? OR payfile_transaction_download_address = ? OR payfile_transaction_upload_address = ? ORDER BY time DESC LIMIT ?, ?";
-        var rows = (await pool.query(sql, [addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, from, count]))[0];
+        var sql = "SELECT * from tx_history WHERE claim_transaction_address = ? OR contract_transaction_from = ? OR contract_transaction_to = ? OR invocation_transaction_address = ? OR issue_transaction_address = ? OR issue_transaction_to = ? OR miner_transaction_address = ? OR miner_transaction_to = ? OR uploadrequest_transaction_upload_address = ? OR downloadrequest_transaction_upload_address = ? OR downloadrequest_transaction_download_address = ? OR approvedownload_transaction_approve_address = ? OR approvedownload_transaction_download_address = ? OR payfile_transaction_download_address = ? OR payfile_transaction_upload_address = ? OR multisign_pubkeys LIKE ? ORDER BY time DESC LIMIT ?, ?";
+        var rows = (await pool.query(sql, [addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, addr, likeAddr, from, count]))[0];
         if (rows.length < 0) {
             _callback("ERROR", []);
         } else if (rows.length == 0) {
@@ -616,7 +616,7 @@ module.exports = {
         formatedBlock['size'] = block.size;
         formatedBlock['script'] = JSON.parse(block.script);
         formatedBlock['time'] = block.time;
-        formatedBlock['producer'] = block.next_consensus;
+        formatedBlock['producer'] = block.current_consensus;
         formatedBlock['prev_block_hash'] = block.prev_block_hash;
         formatedBlock['merkle'] = block.merkle_root;
 
@@ -629,7 +629,7 @@ module.exports = {
         formatedBlock['transaction_count'] = block.tx_count;
         formatedBlock['size'] = block.size;
         formatedBlock['time'] = block.time;
-        formatedBlock['producer'] = block.next_consensus;
+        formatedBlock['producer'] = block.current_consensus;
         formatedBlock['prev_block_hash'] = block.prev_block_hash;
         formatedBlock['merkle'] = block.merkle_root;
 
