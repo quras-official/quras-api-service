@@ -57,14 +57,35 @@ router.get('/rpc', function(req, res, next){
     });
 });
 
-async function getNodes(offset, limit, res) {
+async function getNodes(timestamp, offset, limit, res) {
     try{
         if (offset == -2) {
             var sqlNodes = "SELECT * FROM nodes";
 
             var nodesResult = (await mysqlPool.query(sqlNodes, []))[0];
+            var formatedNodes = [];
 
-            var retNodes = commonf.getFormatedNodes(nodesResult);
+            for (var i = 0 ; i < nodesResult.length; i++) {
+                var node = nodesResult[i];
+                var fNode = {};
+                fNode.account = node.account;
+                fNode.address = node.address;
+                fNode.votes = node.vote;
+                fNode.votes_percent = (node.vote * 100.0 / node.height).toFixed(2);
+                fNode.daily_reward = await getDailyReward(node.address, timestamp);
+
+                formatedNodes.push(fNode);
+            }
+
+            var rest = (100.0).toFixed(2);
+
+            for (var i = 0; i < formatedNodes.length - 1; i++) {
+                rest = rest - formatedNodes[i].votes_percent;
+            }
+
+            formatedNodes[formatedNodes.length - 1].votes_percent = rest.toFixed(2);
+
+            var retNodes = commonf.getFormatedNodes(formatedNodes);
             res = commonf.buildResponse(null, constants.ERR_CONSTANTS.success, retNodes, res);
         }
         else if (offset == -1) {
@@ -75,7 +96,29 @@ async function getNodes(offset, limit, res) {
 
             var nodesResult = (await mysqlPool.query(sqlNodes, [offset, limit]))[0];
 
-            var retNodes = commonf.getFormatedNodes(nodesResult);
+            var formatedNodes = [];
+
+            for (var i = 0 ; i < nodesResult.length; i++) {
+                var node = nodesResult[i];
+                var fNode = {};
+                fNode.account = node.account;
+                fNode.address = node.address;
+                fNode.votes = node.vote;
+                fNode.votes_percent = (node.vote * 100.0 / node.height).toFixed(2);
+                fNode.daily_reward = await getDailyReward(node.address, timestamp);
+
+                formatedNodes.push(fNode);
+            }
+
+            var rest = (100.0).toFixed(2);
+
+            for (var i = 0; i < formatedNodes.length - 1; i++) {
+                rest = rest - formatedNodes[i].votes_percent;
+            }
+
+            formatedNodes[formatedNodes.length - 1].votes_percent = rest.toFixed(2);
+
+            var retNodes = commonf.getFormatedNodes(formatedNodes);
             res = commonf.buildResponse(null, constants.ERR_CONSTANTS.success, retNodes, res);
         }
     }
@@ -85,15 +128,32 @@ async function getNodes(offset, limit, res) {
     }
 }
 
-router.get('/', function(req, res, next){
+async function getDailyReward(address, timestamp) {
+    var endtimestamp = timestamp + 3600 * 24;
+    
+    try {
+        var sql = "SELECT SUM(amount) reward from miner_transaction WHERE address = _to AND address = ? AND time >= ? AND time < ?";
+        var result = (await mysqlPool.query(sql, [address, timestamp, endtimestamp]))[0];
+
+        var sum = result[0].reward == null? 0: result[0].reward;
+        return sum;
+    } catch(error) {
+    }
+    return 0;
+}
+
+router.get('/:timestamp', function(req, res, next){
+    var timestamp = req.params.timestamp;
+
     console.log("The Get Nodes API was called.");
     logger.info("The Get Nodes API was called.");
-    getNodes(-2, -2, res);
+    getNodes(timestamp, -2, -2, res);
 });
 
-router.get('/:offset/:limit', function(req, res, next){
+router.get('/:timestamp/:offset/:limit', function(req, res, next){
     var offset = req.params.offset;
     var limit = req.params.limit;
+    var timestamp = req.params.timestamp;
 
     if (commonf.isNumber(offset)) {
         offset = Number.parseInt(offset, 10);
@@ -109,7 +169,7 @@ router.get('/:offset/:limit', function(req, res, next){
 
     console.log("The Get Nodes API was called, Params => offset : " + offset + ", limit : " + limit);
     logger.info("The Get Nodes API was called, Params => offset : " + offset + ", limit : " + limit);
-    getNodes(offset, limit, res);
+    getNodes(timestamp, offset, limit, res);
 })
 
 async function getNodeFromHash(hash, res) {

@@ -664,6 +664,7 @@ module.exports = {
     getFormatedStatus: function(status) {
         var formatedStatus = {};
         formatedStatus.version = status.block_version;
+        formatedStatus.network = status.network;
         formatedStatus.last_block_height = status.current_block_number;
         formatedStatus.last_block_time = status.last_block_time;
 
@@ -672,23 +673,8 @@ module.exports = {
     getFormatedNodes: function(nodes) {
         var formatedNodes = {};
         formatedNodes.total = nodes.length;
-        formatedNodes.nodes = [];
+        formatedNodes.nodes = nodes;
 
-        nodes.forEach(node => {
-            var fNode = {};
-            fNode.account = node.account;
-            fNode.public_key = node.pub_key;
-            fNode.votes = node.votes;
-            fNode.votes_pecent = node.votes_pecent;
-            fNode.url = node.url;
-            fNode.position = node.position;
-            fNode.daily_reward = [{
-                asset_hash: "c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b",
-                asset_symbol: "XQG",
-                amount: node.daily_reward
-            }];
-            formatedNodes.nodes.push(fNode);
-        });
         return formatedNodes;
     },
     getFormatedAddress: function(addresses, address, txs, unclaimed) {
@@ -759,9 +745,9 @@ module.exports = {
 
         return formatedAsset;
     },
-    getFormatedAssets: function(assets) {
+    getFormatedAssets: function(assets, total) {
         var formatedAsset = {};
-        formatedAsset.total = assets.length;
+        formatedAsset.total = total;
         var iAssets = [];
 
         assets.forEach(asset => {

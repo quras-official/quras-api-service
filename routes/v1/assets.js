@@ -29,11 +29,16 @@ var mysql = require('mysql');
 async function getAssets(offset, limit, res) {
   try {
     var sqlTx = "SELECT register_transaction.* FROM register_transaction ORDER BY block_number";
+    
+    var txsResult = (await mysqlPool.query(sqlTx, [offset, limit]))[0];
+
+    var total = txsResult.length;
+
     if (offset != -1 || limit != -1) {
       sqlTx += " LIMIT ?, ?";
     }
-    
-    var txsResult = (await mysqlPool.query(sqlTx, [offset, limit]))[0];
+
+    txsResult = (await mysqlPool.query(sqlTx, [offset, limit]))[0];
 
     var hash = [];
     var index = 0;
@@ -62,7 +67,7 @@ async function getAssets(offset, limit, res) {
       tx.address_count = 0;
       tx.transaction_count = 0;
     });
-    var retTx = commonf.getFormatedAssets(txsResult);
+    var retTx = commonf.getFormatedAssets(txsResult, total);
     res = commonf.buildResponse(null, constants.ERR_CONSTANTS.success, retTx, res);
   } catch (err) {
     var bodyErrMsg = ["Connection Error"];

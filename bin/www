@@ -29,10 +29,10 @@ app.set('port', port);
 
 
 
-const options = {
-  key: fs.readFileSync('/ssl/blockapi_quras_io.key'),
-  cert: fs.readFileSync('/ssl/blockapi_quras_io.pem')
-};
+// const options = {
+//   key: fs.readFileSync('/ssl/blockapi_quras_io.key'),
+//   cert: fs.readFileSync('/ssl/blockapi_quras_io.pem')
+// };
 
 var server = http.createServer(app);
 // var server = https.createServer(options, app);
