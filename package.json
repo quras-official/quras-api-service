@@ -12,7 +12,7 @@
   "author": "dotFund",
   "license": "MIT",
   "dependencies": {
-    "async": "2.6.1",
+    "async": "2.6.4",
     "bignumber.js": "4.0.0",
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
