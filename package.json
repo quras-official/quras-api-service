@@ -32,7 +32,7 @@
     "simple-node-logger": "18.12.24"
   },
   "devDependencies": {
-    "gulp": "3.9.1",
+    "gulp": "4.0.2",
     "gulp-nodemon": "^2.4.2"
   }
 }
